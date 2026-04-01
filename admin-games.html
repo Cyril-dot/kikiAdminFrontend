@@ -234,7 +234,7 @@
       <div class="confirm-icon"><svg data-lucide="trash-2"></svg></div>
       <div class="confirm-title">Delete All Games?</div>
       <div class="confirm-sub">
-        Only UPCOMING games without active bets will be deleted. Live, Finished, and Cancelled games are skipped.
+        All games will be permanently deleted regardless of status. This cannot be undone.
       </div>
     </div>
     <div id="deleteAllProgress" style="display:none;margin:.75rem 0;font-size:.82rem;color:var(--t2);text-align:center;line-height:1.5"></div>
@@ -328,7 +328,7 @@ function renderDesktopTable(filtered) {
           <button class="btn btn-sm" style="background:var(--accentBg);color:var(--accent);border-color:var(--borderAcc)" onclick="openStatusModal('${g.id}')">
             <svg data-lucide="toggle-left"></svg> Status
           </button>
-          ${g.status === 'UPCOMING' ? `<button class="btn btn-danger btn-sm" onclick="openDeleteModal('${g.id}')"><svg data-lucide="trash-2"></svg></button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${g.id}')"><svg data-lucide="trash-2"></svg></button>
         </div>
       </td>
     </tr>`;
@@ -373,7 +373,7 @@ function renderMobileCards(filtered) {
         <button class="btn btn-sm" style="background:rgba(96,165,250,.1);color:var(--blue);border-color:rgba(96,165,250,.3)" onclick="openCSModal('${g.id}')">
           <svg data-lucide="target"></svg> CS
         </button>
-        ${g.status === 'UPCOMING' ? `<button class="btn btn-danger btn-sm btn-icon-only" onclick="openDeleteModal('${g.id}')"><svg data-lucide="trash-2"></svg></button>` : ''}
+        <button class="btn btn-danger btn-sm btn-icon-only" onclick="openDeleteModal('${g.id}')"><svg data-lucide="trash-2"></svg></button>
       </div>
     </div>`;
   }).join('');
@@ -533,9 +533,9 @@ function openDeleteAllModal() {
 }
 
 async function confirmDeleteAll() {
-  const upcomingGames = GAMES.filter(g => g.status === 'UPCOMING');
-  if (!upcomingGames.length) {
-    showAlert('error', 'No UPCOMING games to delete.');
+  const allGames = [...GAMES];
+  if (!allGames.length) {
+    showAlert('error', 'No games to delete.');
     closeModal('deleteAllModal');
     return;
   }
@@ -552,9 +552,9 @@ async function confirmDeleteAll() {
   let deleted = 0;
   let failed = 0;
 
-  for (let i = 0; i < upcomingGames.length; i++) {
-    const g = upcomingGames[i];
-    progress.textContent = `Deleting ${i + 1} of ${upcomingGames.length}: ${g.homeTeam} vs ${g.awayTeam}…`;
+  for (let i = 0; i < allGames.length; i++) {
+    const g = allGames[i];
+    progress.textContent = `Deleting ${i + 1} of ${allGames.length}: ${g.homeTeam} vs ${g.awayTeam}…`;
     try {
       await apiDeleteGame(g.id);
       GAMES = GAMES.filter(x => x.id !== g.id);
