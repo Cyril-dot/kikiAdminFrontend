@@ -3,9 +3,9 @@
    All real API calls go through this module.
    ═══════════════════════════════════════════════════════ */
 
-const API_BASE = 'http://localhost:8080/api/v1';
-const ADMIN_API = 'http://localhost:8080/api/v1/admin';
-const CORRECT_SCORE_API = 'http://localhost:8080/api/admin/correct-score';
+const API_BASE = 'https://kikiwebbackend.onrender.com/api/v1';
+const ADMIN_API = 'https://kikiwebbackend.onrender.com/api/v1/admin';
+const CORRECT_SCORE_API = 'https://kikiwebbackend.onrender.com/api/admin/correct-score';
 
 /* ── Auth helpers ── */
 function getToken() {
