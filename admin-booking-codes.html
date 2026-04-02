@@ -155,6 +155,22 @@
 }
 .odds-input:focus { border-color: var(--borderAcc); }
 
+.score-pred-input {
+  width: 80px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-family: var(--ff);
+  font-size: .82rem;
+  color: var(--t1);
+  text-align: center;
+  outline: none;
+  transition: border-color .15s;
+  placeholder-color: var(--t3);
+}
+.score-pred-input:focus { border-color: var(--borderAcc); }
+
 .odds-strip {
   background: var(--bg3);
   border: 1px solid var(--border);
@@ -260,7 +276,7 @@
 .tab-btn:hover:not(.active) { border-color: var(--borderHov); color: var(--t1); }
 
 .games-list-scroll { max-height: 260px; overflow-y: auto; padding-right: 2px; }
-.picks-list-scroll { max-height: 240px; overflow-y: auto; padding-right: 2px; }
+.picks-list-scroll { max-height: 280px; overflow-y: auto; padding-right: 2px; }
 
 .modal-search {
   width: 100%;
@@ -436,7 +452,7 @@
         </div>
         <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end">
           <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
-            <input type="checkbox" id="includesScorePrediction" style="accent-color:var(--accent)">
+            <input type="checkbox" id="includesScorePrediction" style="accent-color:var(--accent)" onchange="renderPicksList()">
             Includes Score Prediction
           </label>
         </div>
@@ -508,7 +524,6 @@
 <script>
 /* ═══════════════════════════════════════════════
    BOOKING CODES — SELF-CONTAINED JS
-   No shared admin-api.js or admin-sidebar.js
 ═══════════════════════════════════════════════ */
 
 /* ── API endpoints ── */
@@ -518,15 +533,15 @@ const SETTLE_API = 'https://kikiwebbackend.onrender.com/api/admin/settlement/boo
 const RESULT_API = 'https://kikiwebbackend.onrender.com/api/v1/admin/games';
 
 /* ── State ── */
-let ALL_CODES        = [];
-let ALL_GAMES        = [];
-let selectedGameIds  = new Set();
-let pickConfig       = {};
-let codeFilter       = 'ALL';
-let PAGE             = 1;
-const PER_PAGE       = 9;
-let currentDetailCode    = null;
-let currentScoreGameId   = null;
+let ALL_CODES             = [];
+let ALL_GAMES             = [];
+let selectedGameIds       = new Set();
+let pickConfig            = {};
+let codeFilter            = 'ALL';
+let PAGE                  = 1;
+const PER_PAGE            = 9;
+let currentDetailCode     = null;
+let currentScoreGameId    = null;
 let currentScoreBookingId = null;
 
 /* ══════════════════════════════════════════════
@@ -640,7 +655,6 @@ function injectShell() {
     </div>`;
 
   document.getElementById('sidebar').innerHTML = html;
-
   document.getElementById('sidebarOverlay').addEventListener('click', bcCloseSidebar);
   document.getElementById('sidebarToggle').addEventListener('click', bcToggleSidebar);
   lucide.createIcons();
@@ -684,9 +698,9 @@ async function loadAll() {
 ══════════════════════════════════════════════ */
 async function loadCodes() {
   try {
-    const data = await bcFetch(BC_API);
-    // handles plain array, Page<> with content field, or wrapped data
-    ALL_CODES = Array.isArray(data) ? data : (data.content || data || []);
+    // FIX: fetch up to 200 at once so we don't silently miss codes beyond page 0
+    const data = await bcFetch(BC_API + '?size=200&sort=createdAt,desc');
+    ALL_CODES = Array.isArray(data) ? data : (data.content || []);
     updateStats();
     renderCodes();
   } catch (err) {
@@ -696,7 +710,7 @@ async function loadCodes() {
 
 async function loadGames() {
   try {
-    const data = await bcFetch(GAME_API);
+    const data = await bcFetch(GAME_API + '?size=200');
     ALL_GAMES = (Array.isArray(data) ? data : (data.content || []))
       .filter(g => g.status === 'UPCOMING');
   } catch (err) {
@@ -770,7 +784,7 @@ function renderCodes() {
             <span style="font-family:var(--ffC);font-weight:700;color:var(--accent)">${Number(g.odds).toFixed(2)}x</span>
           </div>
         `).join('')}
-        ${(c.games || []).length > 3 ? `<div style="font-size:.75rem;color:var(--t3);padding:.2rem .5rem">+${c.games.length - 3} more games…</div>` : ''}
+        ${(c.games || []).length > 3 ? `<div style="font-size:.75rem;color:var(--t3);padding:.2rem .5rem">+${(c.games.length - 3)} more games…</div>` : ''}
       </div>
       <div class="code-actions">
         <button class="btn btn-secondary btn-sm" onclick='openDetailModal(${JSON.stringify(c)})'>
@@ -802,7 +816,7 @@ function renderCodes() {
 }
 
 function goPage(p) {
-  const q        = document.getElementById('codeSearch').value;
+  const q = document.getElementById('codeSearch').value;
   const filtered = ALL_CODES.filter(c => {
     if (codeFilter !== 'ALL' && c.status !== codeFilter) return false;
     if (q && !(c.code || '').toUpperCase().includes(q.toUpperCase())) return false;
@@ -824,11 +838,11 @@ function copyCode(code) {
 function openCreateModal() {
   selectedGameIds = new Set();
   pickConfig      = {};
-  document.getElementById('gameSearch').value                       = '';
-  document.getElementById('expiresAt').value                        = '';
-  document.getElementById('includesScorePrediction').checked        = false;
-  document.getElementById('picksSection').style.display             = 'none';
-  document.getElementById('optionsSection').style.display           = 'none';
+  document.getElementById('gameSearch').value                = '';
+  document.getElementById('expiresAt').value                 = '';
+  document.getElementById('includesScorePrediction').checked = false;
+  document.getElementById('picksSection').style.display      = 'none';
+  document.getElementById('optionsSection').style.display    = 'none';
   document.getElementById('createError').classList.remove('show');
   renderGameSelector();
   document.getElementById('createModal').classList.add('show');
@@ -856,7 +870,7 @@ function renderGameSelector() {
   }
 
   container.innerHTML = filtered.map(g => {
-    const sel = selectedGameIds.has(g.id);
+    const sel = selectedGameIds.has(String(g.id));
     return `<div class="game-selector-item ${sel ? 'selected' : ''}" onclick="toggleGame('${g.id}')">
       <div class="game-selector-check"><svg data-lucide="check"></svg></div>
       <div style="flex:1;min-width:0">
@@ -874,17 +888,18 @@ function renderGameSelector() {
 }
 
 function toggleGame(gameId) {
-  if (selectedGameIds.has(gameId)) {
-    selectedGameIds.delete(gameId);
-    delete pickConfig[gameId];
+  const id = String(gameId);
+  if (selectedGameIds.has(id)) {
+    selectedGameIds.delete(id);
+    delete pickConfig[id];
   } else {
     if (selectedGameIds.size >= 10) {
       showCreateError('Maximum 10 games per booking code.');
       return;
     }
-    selectedGameIds.add(gameId);
-    const g = ALL_GAMES.find(x => String(x.id) === String(gameId));
-    pickConfig[gameId] = { pick: 'HOME_WIN', odds: g?.oddsHomeWin || 1.5 };
+    selectedGameIds.add(id);
+    const g = ALL_GAMES.find(x => String(x.id) === id);
+    pickConfig[id] = { pick: 'HOME_WIN', odds: g?.oddsHomeWin || 1.5, scorePrediction: '' };
   }
   renderGameSelector();
   renderPicksList();
@@ -899,38 +914,47 @@ function updatePicksVisibility() {
 }
 
 function renderPicksList() {
-  const container = document.getElementById('picksList');
-  const games     = ALL_GAMES.filter(g => selectedGameIds.has(String(g.id)));
+  const container  = document.getElementById('picksList');
+  const needsScore = document.getElementById('includesScorePrediction').checked;
+  const games      = ALL_GAMES.filter(g => selectedGameIds.has(String(g.id)));
 
   container.innerHTML = games.map(g => {
-    const cfg = pickConfig[g.id] || { pick: 'HOME_WIN', odds: g.oddsHomeWin || 1.5 };
-    return `<div class="pick-row">
+    const id  = String(g.id);
+    const cfg = pickConfig[id] || { pick: 'HOME_WIN', odds: g.oddsHomeWin || 1.5, scorePrediction: '' };
+    return `<div class="pick-row" style="grid-template-columns: 1fr auto auto ${needsScore ? 'auto' : ''}">
       <div>
         <div class="pick-row-match">${g.homeTeam} vs ${g.awayTeam}</div>
         <div style="font-size:.7rem;color:var(--t3)">${fmtDate(g.matchDate)}</div>
       </div>
       <div class="pick-seg">
-        <button onclick="setPick('${g.id}','HOME_WIN',${g.oddsHomeWin || 1.5},this)"
+        <button onclick="setPick('${id}','HOME_WIN',${g.oddsHomeWin || 1.5},this)"
           class="${cfg.pick === 'HOME_WIN' ? 'active-1' : ''}">1</button>
-        <button onclick="setPick('${g.id}','DRAW',${g.oddsDraw || 3.0},this)"
+        <button onclick="setPick('${id}','DRAW',${g.oddsDraw || 3.0},this)"
           class="${cfg.pick === 'DRAW' ? 'active-x' : ''}">X</button>
-        <button onclick="setPick('${g.id}','AWAY_WIN',${g.oddsAwayWin || 1.5},this)"
+        <button onclick="setPick('${id}','AWAY_WIN',${g.oddsAwayWin || 1.5},this)"
           class="${cfg.pick === 'AWAY_WIN' ? 'active-2' : ''}">2</button>
       </div>
-      <input type="number" class="odds-input" id="odds_${g.id}"
+      <input type="number" class="odds-input" id="odds_${id}"
         value="${Number(cfg.odds).toFixed(2)}" min="1" step="0.01"
-        oninput="updateOdds('${g.id}',this.value)">
+        oninput="updateOdds('${id}',this.value)">
+      ${needsScore ? `
+        <input type="text" class="score-pred-input" id="score_${id}"
+          placeholder="e.g. 2-1"
+          value="${cfg.scorePrediction || ''}"
+          oninput="updateScore('${id}',this.value)">
+      ` : ''}
     </div>`;
   }).join('');
 }
 
 function setPick(gameId, pick, defaultOdds, btn) {
-  pickConfig[gameId]       = pickConfig[gameId] || {};
-  pickConfig[gameId].pick  = pick;
-  const oddsEl             = document.getElementById('odds_' + gameId);
+  const id = String(gameId);
+  pickConfig[id]       = pickConfig[id] || {};
+  pickConfig[id].pick  = pick;
+  const oddsEl         = document.getElementById('odds_' + id);
   if (oddsEl && defaultOdds) {
-    oddsEl.value              = Number(defaultOdds).toFixed(2);
-    pickConfig[gameId].odds   = defaultOdds;
+    oddsEl.value           = Number(defaultOdds).toFixed(2);
+    pickConfig[id].odds    = defaultOdds;
   }
   const seg = btn.closest('.pick-seg');
   seg.querySelectorAll('button').forEach(b => b.className = '');
@@ -939,9 +963,16 @@ function setPick(gameId, pick, defaultOdds, btn) {
 }
 
 function updateOdds(gameId, val) {
-  if (!pickConfig[gameId]) pickConfig[gameId] = {};
-  pickConfig[gameId].odds = parseFloat(val) || 1;
+  const id = String(gameId);
+  if (!pickConfig[id]) pickConfig[id] = {};
+  pickConfig[id].odds = parseFloat(val) || 1;
   updateCombinedOdds();
+}
+
+function updateScore(gameId, val) {
+  const id = String(gameId);
+  if (!pickConfig[id]) pickConfig[id] = {};
+  pickConfig[id].scorePrediction = val;
 }
 
 function updateCombinedOdds() {
@@ -958,29 +989,35 @@ async function submitCreate() {
 
   if (selectedGameIds.size < 1) { showCreateError('Select at least 1 game.'); return; }
 
+  const needsScore = document.getElementById('includesScorePrediction').checked;
+
   for (const id of selectedGameIds) {
     const cfg = pickConfig[id];
-    if (!cfg || !cfg.pick)          { showCreateError('Please set a pick for all games.'); return; }
-    if (!cfg.odds || cfg.odds < 1)  { showCreateError('All odds must be at least 1.00.'); return; }
+    if (!cfg || !cfg.pick)         { showCreateError('Please set a pick for all games.'); return; }
+    if (!cfg.odds || cfg.odds < 1) { showCreateError('All odds must be at least 1.00.'); return; }
+    if (needsScore && (!cfg.scorePrediction || cfg.scorePrediction.trim() === '')) {
+      showCreateError('Please enter a score prediction for all games.'); return;
+    }
   }
 
   const games = Array.from(selectedGameIds).map((id, idx) => {
     const cfg = pickConfig[id];
     return {
-      gameId:   id,           // UUID string — matches backend UUID type
-      pick:     cfg.pick,
-      odds:     parseFloat(cfg.odds),
-      position: idx + 1,
+      gameId:          id,
+      pick:            cfg.pick,
+      odds:            parseFloat(cfg.odds),
+      position:        idx + 1,
+      scorePrediction: needsScore ? cfg.scorePrediction : null,
     };
   });
 
   const payload = {
     games,
-    includesScorePrediction: document.getElementById('includesScorePrediction').checked,
+    includesScorePrediction: needsScore,
   };
 
   const expiresAt = document.getElementById('expiresAt').value;
-  if (expiresAt) payload.expiresAt = expiresAt + ':00';   // "YYYY-MM-DDTHH:mm:ss"
+  if (expiresAt) payload.expiresAt = expiresAt + ':00';
 
   const btn = document.getElementById('createBtn');
   btn.classList.add('loading');
