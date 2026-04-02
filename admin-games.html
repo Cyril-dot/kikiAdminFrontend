@@ -271,827 +271,519 @@
 <script src="admin-api.js"></script>
 <script src="admin-sidebar.js"></script>
 <script>
-  /* ═══════════════════════════════════════════════
-   CONFIG & ENDPOINTS
-═══════════════════════════════════════════════ */
-const BASE        = 'https://kikiwebbackend.onrender.com';
-const STD_API     = BASE + '/api/v1/booking-codes/standard';
-const CS_API      = BASE + '/api/v1/booking-codes/correct-score';
-const GAME_API    = BASE + '/api/v1/admin/games';
-const CS_MKT_API  = BASE + '/api/admin/correct-score';
-const SETTLE_API  = BASE + '/api/admin/settlement/booking-codes';
-const RESULT_API  = BASE + '/api/v1/admin/games';
+/* ─────────────────────────────────────────────────
+   State
+───────────────────────────────────────────────── */
+let GAMES = [];
+let currentFilter = 'ALL';
+let editingId = null;
 
-/* ── State ── */
-let ALL_CODES             = [];
-let ALL_GAMES             = [];
-let selectedGameIds       = new Set();
-let pickConfig            = {};
-let csOptionsCache        = {};
-let codeFilter            = 'ALL';
-let PAGE                  = 1;
-const PER_PAGE            = 9;
-let currentDetailCode     = null;
-let currentScoreGameId    = null;
-let currentScoreBookingId = null;
-let selectedCodeType      = 'standard';
-
-/* ═══════════════════════════════════════════════
-   AUTH HELPERS
-═══════════════════════════════════════════════ */
-function bcGetToken()   { return localStorage.getItem('gstake_admin_token') || localStorage.getItem('gstake_token') || null; }
-function bcGetAdminId() { const a = JSON.parse(localStorage.getItem('gstake_admin') || '{}'); return a.id || a.adminId || null; }
-function bcRequireAuth(){ if (!bcGetToken()) { window.location.href = 'admin-login.html'; return false; } return true; }
-
-/* ═══════════════════════════════════════════════
-   FETCH WRAPPER
-═══════════════════════════════════════════════ */
-async function bcFetch(url, options = {}) {
-  const token   = bcGetToken();
-  const adminId = bcGetAdminId();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...(token   ? { 'Authorization': `Bearer ${token}` } : {}),
-    ...(adminId ? { 'X-Admin-Id': adminId }              : {}),
-    ...(options.headers || {}),
-  };
-  const res  = await fetch(url, { ...options, headers });
-  if (res.status === 401) {
-    localStorage.removeItem('gstake_admin_token');
-    localStorage.removeItem('gstake_admin');
-    window.location.href = 'admin-login.html';
-    throw new Error('Session expired.');
-  }
-  const text = await res.text();
-  let data = {};
-  if (text) { try { data = JSON.parse(text); } catch { data = {}; } }
-  if (!res.ok) throw new Error(data.message || data.error || `Request failed (${res.status})`);
-  return data.data !== undefined ? data.data : data;
-}
-
-/* ═══════════════════════════════════════════════
-   SHELL / SIDEBAR
-═══════════════════════════════════════════════ */
-function injectShell() {
-  const admin    = JSON.parse(localStorage.getItem('gstake_admin') || '{}');
-  const initials = (admin.fullName || 'Admin').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
-
-  document.getElementById('topNav').innerHTML = `
-    <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar"><svg data-lucide="menu"></svg></button>
-    <a href="index.html" class="logo">G<em>S</em>TAKE</a>
-    <span class="admin-badge">Admin Panel</span>
-    <div class="nav-spacer"></div>
-    <div class="nav-admin-info">
-      <span class="nav-avatar">${initials}</span>
-      <div style="display:flex;flex-direction:column;line-height:1.2">
-        <strong>${admin.fullName || 'Administrator'}</strong>
-        <span style="font-size:.7rem">${admin.email || ''}</span>
-      </div>
-    </div>
-    <div class="icon-btn" onclick="bcToggleTheme()" title="Toggle theme">
-      <svg data-lucide="moon" id="themeIco"></svg>
-    </div>`;
-
-  const links = [
-    { href:'index.html',               icon:'layout-dashboard', label:'Dashboard',           section:'Overview'   },
-    { href:'admin-users.html',         icon:'users',            label:'Users',               section:'Management' },
-    { href:'admin-games.html',         icon:'calendar',         label:'Games & Odds',         section:'Management' },
-    { href:'admin-settlement.html',    icon:'flag',             label:'Settlement & Results', section:'Management' },
-    { href:'admin-transactions.html',  icon:'arrow-left-right', label:'Transactions',         section:'Management' },
-    { href:'admin-bets.html',          icon:'ticket',           label:'Bet Slips',            section:'Management' },
-    { href:'admin-booking-codes.html', icon:'qr-code',          label:'Booking Codes',        section:'Management' },
-  ];
-
-  let html = ''; let lastSection = '';
-  links.forEach(link => {
-    if (link.section !== lastSection) { html += `<div class="sidebar-section-label">${link.section}</div>`; lastSection = link.section; }
-    const active = link.href === 'admin-booking-codes.html' ? 'active' : '';
-    html += `<a href="${link.href}" class="sidebar-link ${active}"><svg data-lucide="${link.icon}"></svg><span>${link.label}</span></a>`;
-  });
-  html += `<div class="sidebar-bottom"><button class="sidebar-logout" onclick="bcLogout()"><svg data-lucide="log-out"></svg><span>Sign Out</span></button></div>`;
-
-  document.getElementById('sidebar').innerHTML = html;
-  document.getElementById('sidebarOverlay').addEventListener('click', bcCloseSidebar);
-  document.getElementById('sidebarToggle').addEventListener('click', bcToggleSidebar);
-  lucide.createIcons();
-}
-
-function bcToggleSidebar() { document.getElementById('sidebar').classList.toggle('mobile-open'); document.getElementById('sidebarOverlay').classList.toggle('show'); }
-function bcCloseSidebar()  { document.getElementById('sidebar').classList.remove('mobile-open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
-function bcToggleTheme() {
-  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
-  const ico = document.getElementById('themeIco');
-  if (ico) { ico.setAttribute('data-lucide', dark ? 'sun' : 'moon'); lucide.createIcons(); }
-}
-function bcLogout() { localStorage.removeItem('gstake_admin_token'); localStorage.removeItem('gstake_admin'); window.location.href = 'admin-login.html'; }
-
-/* ═══════════════════════════════════════════════
-   INIT
-═══════════════════════════════════════════════ */
+/* ─────────────────────────────────────────────────
+   Init
+───────────────────────────────────────────────── */
 window.addEventListener('load', () => {
-  bcRequireAuth();
-  injectShell();
-  loadAll();
+  requireAuth();
+  injectAdminShell('admin-games.html');
+  document.getElementById('matchDate').min = new Date().toISOString().slice(0, 16);
+  loadGames();
 });
 
-async function loadAll() { await Promise.all([loadCodes(), loadGames()]); }
-
-/* ═══════════════════════════════════════════════
-   LOAD DATA
-═══════════════════════════════════════════════ */
-async function loadCodes() {
-  try {
-    const [stdData, csData] = await Promise.all([
-      bcFetch(`${STD_API}/admin/mine?size=200&sort=createdAt,desc`).catch(() => ({ content: [] })),
-      bcFetch(`${CS_API}/admin/mine?size=200&sort=createdAt,desc`).catch(() => ({ content: [] })),
-    ]);
-    const stdCodes = (Array.isArray(stdData) ? stdData : (stdData.content || [])).map(c => ({ ...c, _type: 'STANDARD' }));
-    const csCodes  = (Array.isArray(csData)  ? csData  : (csData.content  || [])).map(c => ({ ...c, _type: 'CORRECT_SCORE' }));
-    ALL_CODES = [...stdCodes, ...csCodes].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    updateStats();
-    renderCodes();
-  } catch (err) {
-    showPageError('Failed to load booking codes: ' + err.message);
-  }
-}
-
+/* ─────────────────────────────────────────────────
+   Load & render
+───────────────────────────────────────────────── */
 async function loadGames() {
   try {
-    const data = await bcFetch(GAME_API + '?size=200');
-    ALL_GAMES  = (Array.isArray(data) ? data : (data.content || [])).filter(g => g.status === 'UPCOMING');
+    GAMES = await apiGetAllGames();
+    renderGamesTable();
   } catch (err) {
-    console.warn('Could not load games:', err.message);
+    showAlert('error', 'Failed to load games: ' + err.message);
   }
 }
 
-/* ═══════════════════════════════════════════════
-   CORRECT SCORE OPTIONS
-═══════════════════════════════════════════════ */
-async function fetchCSOptions(gameId) {
-  if (csOptionsCache[gameId]) return csOptionsCache[gameId];
-  const result = await bcFetch(`${CS_MKT_API}/${gameId}/generate`, { method: 'POST' });
-  const options = Array.isArray(result) ? result : (result.options || result.content || []);
-  csOptionsCache[gameId] = options;
-  return options;
-}
-
-/* ═══════════════════════════════════════════════
-   STATS
-═══════════════════════════════════════════════ */
-function updateStats() {
-  document.getElementById('statTotal').textContent   = ALL_CODES.length;
-  document.getElementById('statActive').textContent  = ALL_CODES.filter(c => c.status === 'ACTIVE').length;
-  document.getElementById('statExpired').textContent = ALL_CODES.filter(c => c.status !== 'ACTIVE').length;
-  document.getElementById('statCS').textContent      = ALL_CODES.filter(c => c._type === 'CORRECT_SCORE').length;
-}
-
-/* ═══════════════════════════════════════════════
-   RENDER CODES GRID
-═══════════════════════════════════════════════ */
-function setFilter(f, btn) {
-  codeFilter = f; PAGE = 1;
-  document.querySelectorAll('.tabs .tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderCodes();
-}
-
-function renderCodes() {
-  const q        = (document.getElementById('codeSearch').value || '').toUpperCase();
-  const filtered = ALL_CODES.filter(c => {
-    if (codeFilter === 'STANDARD'      && c._type  !== 'STANDARD')      return false;
-    if (codeFilter === 'CORRECT_SCORE' && c._type  !== 'CORRECT_SCORE') return false;
-    if (codeFilter === 'ACTIVE'        && c.status !== 'ACTIVE')         return false;
-    if (codeFilter === 'DISABLED'      && c.status !== 'DISABLED')       return false;
-    if (q && !(c.code || '').includes(q)) return false;
+function renderGamesTable() {
+  const search = document.getElementById('gameSearch').value.toLowerCase();
+  const filtered = GAMES.filter(g => {
+    if (currentFilter !== 'ALL' && g.status !== currentFilter) return false;
+    if (search && !`${g.homeTeam} ${g.awayTeam} ${g.bookingCode || ''}`.toLowerCase().includes(search)) return false;
     return true;
   });
-  const totalPages = Math.ceil(filtered.length / PER_PAGE) || 1;
-  const slice      = filtered.slice((PAGE - 1) * PER_PAGE, PAGE * PER_PAGE);
-  const grid       = document.getElementById('codesGrid');
+  renderDesktopTable(filtered);
+  renderMobileCards(filtered);
+  lucide.createIcons();
+}
 
-  if (!slice.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><svg data-lucide="ticket"></svg><p>No booking codes found.</p></div>`;
-    document.getElementById('codesPagination').innerHTML = '';
-    lucide.createIcons(); return;
+function renderDesktopTable(filtered) {
+  const tbody = document.getElementById('gamesBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--t2)">No games found.</td></tr>`;
+    return;
   }
+  tbody.innerHTML = filtered.map(g => {
+    const statusClass = { UPCOMING:'upcoming', LIVE:'live', FINISHED:'finished', CANCELLED:'cancelled' }[g.status] || 'upcoming';
+    const score = (g.homeScore != null && g.awayScore != null)
+      ? `<div class="score-display"><span>${g.homeScore}</span><span class="score-sep">–</span><span>${g.awayScore}</span></div>`
+      : '<span style="color:var(--t3);font-size:.8rem">—</span>';
+    const canEdit = g.status === 'UPCOMING';
+    const csStatus = g.correctScoreMarketStatus || 'OPEN';
+    const csClass = { OPEN:'upcoming', LOCKED:'live', SETTLED:'finished' }[csStatus] || 'upcoming';
 
-  grid.innerHTML = slice.map((c, i) => {
-    const isCS      = c._type === 'CORRECT_SCORE';
-    const typeBadge = isCS ? `<span class="cs-badge">Correct Score</span>` : `<span class="std-badge">Standard</span>`;
-    return `
-    <div class="code-card" style="animation-delay:${i * 0.04}s">
-      <div class="code-card-top">
-        <div><div class="code-display" title="Click to copy" onclick="copyCode('${c.code}')">${c.code}</div></div>
-        <div class="code-card-top-badges">
-          ${typeBadge}
-          <span class="badge badge-${statusBadge(c.status)}">${c.status}</span>
+    return `<tr>
+      <td>
+        <div style="font-weight:600;font-size:.88rem">${esc(g.homeTeam)} <span style="color:var(--t3)">vs</span> ${esc(g.awayTeam)}</div>
+        ${g.bookingCode ? `<div class="td-mono">${esc(g.bookingCode)}</div>` : ''}
+      </td>
+      <td class="td-muted">${fmtDate(g.matchDate)}</td>
+      <td><span class="badge badge-${statusClass}">${g.status}</span></td>
+      <td>
+        <div class="odds-set">
+          <span class="odds-chip"><span>H</span>${g.oddsHomeWin ?? '—'}</span>
+          <span class="odds-chip"><span>D</span>${g.oddsDraw ?? '—'}</span>
+          <span class="odds-chip"><span>A</span>${g.oddsAwayWin ?? '—'}</span>
         </div>
-      </div>
-      <div class="code-card-meta">
-        <span><svg data-lucide="layers"></svg>${c.gameCount || (c.games || []).length} games</span>
-        <span><svg data-lucide="trending-up"></svg>${Number(c.combinedOdds || 0).toFixed(2)}x odds</span>
-        ${c.expiresAt ? `<span><svg data-lucide="clock"></svg>Expires ${fmtDate(c.expiresAt)}</span>` : ''}
-      </div>
-      <div class="code-card-games">
-        ${(c.games || []).slice(0, 3).map(g => `
-          <div class="code-mini-game">
-            ${isCS ? `<span class="pick pcs">${g.scorePrediction || 'CS'}</span>` : `<span class="pick ${pickClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
-            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.homeTeam} vs ${g.awayTeam}</span>
-            <span style="font-family:var(--ffC);font-weight:700;color:var(--accent)">${Number(g.odds).toFixed(2)}x</span>
-          </div>`).join('')}
-        ${(c.games || []).length > 3 ? `<div style="font-size:.75rem;color:var(--t3);padding:.2rem .5rem">+${c.games.length - 3} more games…</div>` : ''}
-      </div>
-      <div class="code-actions">
-        <button class="btn btn-secondary btn-sm" onclick='openDetailModal(${safeJson(c)})'>
-          <svg data-lucide="eye"></svg> View
+      </td>
+      <td>${score}</td>
+      <td>
+        <button class="btn btn-sm" style="background:rgba(96,165,250,.1);color:var(--blue);border-color:rgba(96,165,250,.3)"
+          onclick="openCSModal('${g.id}')">
+          <svg data-lucide="target"></svg>
+          <span class="badge badge-${csClass}" style="font-size:.65rem;padding:1px 5px">${csStatus}</span>
         </button>
-        ${c.status === 'ACTIVE' ? `
-          <button class="btn btn-success btn-sm" onclick='openSettleModal(${safeJson(c)})'>
-            <svg data-lucide="flag"></svg> Settle
+      </td>
+      <td>
+        <div class="action-cell">
+          ${canEdit ? `<button class="btn btn-secondary btn-sm" title="Edit" onclick="openEditModal('${g.id}')"><svg data-lucide="pencil"></svg></button>` : ''}
+          <button class="btn btn-sm" style="background:rgba(245,166,35,.12);color:var(--accent);border-color:var(--borderAcc)" onclick="goToSettlement('${g.id}')">
+            <svg data-lucide="flag"></svg> Settlement
           </button>
-          <button class="btn btn-danger btn-sm" onclick="disableCode('${c.id}','${c._type}')">
-            <svg data-lucide="ban"></svg> Disable
-          </button>` : ''}
-      </div>
-    </div>`;
+          <button class="btn btn-sm" style="background:var(--accentBg);color:var(--accent);border-color:var(--borderAcc)" onclick="openStatusModal('${g.id}')">
+            <svg data-lucide="toggle-left"></svg> Status
+          </button>
+          <button class="btn btn-danger btn-sm" title="Delete game" onclick="openDeleteModal('${g.id}')">
+            <svg data-lucide="trash-2"></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
   }).join('');
+}
 
-  let pages = '';
-  for (let i = 1; i <= Math.min(totalPages, 7); i++) {
-    pages += `<button class="page-btn${i === PAGE ? ' active' : ''}" onclick="goPage(${i})">${i}</button>`;
+function renderMobileCards(filtered) {
+  const container = document.getElementById('gameCards');
+  if (!filtered.length) {
+    container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--t2);font-size:.85rem">No games found.</div>`;
+    return;
   }
-  document.getElementById('codesPagination').innerHTML =
-    `<button class="page-btn" onclick="goPage(${PAGE-1})" ${PAGE<=1?'disabled':''}>←</button>
-     ${pages}
-     <span class="page-info">${filtered.length} codes</span>
-     <button class="page-btn" onclick="goPage(${PAGE+1})" ${PAGE>=totalPages?'disabled':''}>→</button>`;
-  lucide.createIcons();
-}
-
-function goPage(p) {
-  const q        = document.getElementById('codeSearch').value;
-  const filtered = ALL_CODES.filter(c => {
-    if (codeFilter === 'STANDARD'      && c._type  !== 'STANDARD')      return false;
-    if (codeFilter === 'CORRECT_SCORE' && c._type  !== 'CORRECT_SCORE') return false;
-    if (codeFilter === 'ACTIVE'        && c.status !== 'ACTIVE')         return false;
-    if (codeFilter === 'DISABLED'      && c.status !== 'DISABLED')       return false;
-    if (q && !(c.code || '').toUpperCase().includes(q.toUpperCase())) return false;
-    return true;
-  });
-  const total = Math.ceil(filtered.length / PER_PAGE) || 1;
-  if (p < 1 || p > total) return;
-  PAGE = p; renderCodes();
-}
-
-function copyCode(code) {
-  navigator.clipboard.writeText(code).then(() => showPageSuccess('Code copied: ' + code));
-}
-
-/* ═══════════════════════════════════════════════
-   CODE TYPE SELECTOR
-═══════════════════════════════════════════════ */
-function selectCodeType(type) {
-  selectedCodeType = type;
-  document.getElementById('typeStandard').classList.toggle('selected',     type === 'standard');
-  document.getElementById('typeCorrectScore').classList.toggle('selected', type === 'correctscore');
-  if (selectedGameIds.size > 0) renderPicksList();
-  document.getElementById('csNote').style.display = type === 'correctscore' ? 'flex' : 'none';
-  document.getElementById('picksStepLabel').textContent =
-    type === 'correctscore' ? 'Select Score Option & Odds for Each Game' : 'Set Pick & Odds for Each Game';
-  lucide.createIcons();
-}
-
-/* ═══════════════════════════════════════════════
-   CREATE MODAL
-═══════════════════════════════════════════════ */
-function openCreateModal() {
-  selectedGameIds  = new Set();
-  pickConfig       = {};
-  csOptionsCache   = {};
-  selectedCodeType = 'standard';
-  document.getElementById('gameSearch').value              = '';
-  document.getElementById('expiresAt').value               = '';
-  document.getElementById('picksSection').style.display   = 'none';
-  document.getElementById('optionsSection').style.display = 'none';
-  document.getElementById('createError').classList.remove('show');
-  document.getElementById('csNote').style.display         = 'none';
-  document.getElementById('typeStandard').classList.add('selected');
-  document.getElementById('typeCorrectScore').classList.remove('selected');
-  document.getElementById('picksStepLabel').textContent   = 'Set Pick & Odds for Each Game';
-  renderGameSelector();
-  document.getElementById('createModal').classList.add('show');
-  lucide.createIcons();
-}
-
-function closeCreateModal() { document.getElementById('createModal').classList.remove('show'); }
-
-function renderGameSelector() {
-  const q        = document.getElementById('gameSearch').value.toLowerCase();
-  const filtered = ALL_GAMES.filter(g =>
-    g.homeTeam.toLowerCase().includes(q) || g.awayTeam.toLowerCase().includes(q)
-  );
-  const container = document.getElementById('gamesList');
-  if (!ALL_GAMES.length) { container.innerHTML = `<div style="font-size:.82rem;color:var(--t2);padding:.5rem">No upcoming games available.</div>`; return; }
-  if (!filtered.length)  { container.innerHTML = `<div style="font-size:.82rem;color:var(--t2);padding:.5rem">No games match your search.</div>`; return; }
   container.innerHTML = filtered.map(g => {
-    const sel = selectedGameIds.has(String(g.id));
-    return `<div class="game-selector-item ${sel ? 'selected' : ''}" onclick="toggleGame('${g.id}')">
-      <div class="game-selector-check"><svg data-lucide="check"></svg></div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.84rem;font-weight:600">${g.homeTeam} vs ${g.awayTeam}</div>
-        <div style="font-size:.72rem;color:var(--t3)">${fmtDate(g.matchDate)}</div>
+    const statusClass = { UPCOMING:'upcoming', LIVE:'live', FINISHED:'finished', CANCELLED:'cancelled' }[g.status] || 'upcoming';
+    const score = (g.homeScore != null && g.awayScore != null)
+      ? `<div class="game-card-score">${esc(g.homeTeam)} <span style="color:var(--accent)">${g.homeScore} – ${g.awayScore}</span> ${esc(g.awayTeam)}</div>`
+      : '';
+    const canEdit = g.status === 'UPCOMING';
+
+    return `<div class="game-card">
+      <div class="game-card-top">
+        <div class="game-teams">${esc(g.homeTeam)}<span class="vs">vs</span>${esc(g.awayTeam)}</div>
+        <span class="badge badge-${statusClass}">${g.status}</span>
       </div>
-      <div style="font-size:.72rem;color:var(--t2);text-align:right;flex-shrink:0">
-        <div>1: ${g.oddsHomeWin?.toFixed(2) || '—'}</div>
-        <div>X: ${g.oddsDraw?.toFixed(2)    || '—'}</div>
-        <div>2: ${g.oddsAwayWin?.toFixed(2) || '—'}</div>
+      <div class="game-card-meta">
+        <span class="game-date"><svg data-lucide="clock" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:3px"></svg>${fmtDate(g.matchDate)}</span>
+        ${g.bookingCode ? `<span class="booking-code">${esc(g.bookingCode)}</span>` : ''}
+      </div>
+      <div class="game-card-odds">
+        <div class="odds-set">
+          <span class="odds-chip"><span>H</span>${g.oddsHomeWin ?? '—'}</span>
+          <span class="odds-chip"><span>D</span>${g.oddsDraw ?? '—'}</span>
+          <span class="odds-chip"><span>A</span>${g.oddsAwayWin ?? '—'}</span>
+        </div>
+      </div>
+      ${score}
+      <div class="game-card-actions">
+        ${canEdit ? `<button class="btn btn-secondary btn-sm" onclick="openEditModal('${g.id}')"><svg data-lucide="pencil"></svg> Edit</button>` : ''}
+        <button class="btn btn-sm" style="background:rgba(245,166,35,.12);color:var(--accent);border-color:var(--borderAcc);flex:1" onclick="goToSettlement('${g.id}')">
+          <svg data-lucide="flag"></svg> Settlement
+        </button>
+        <button class="btn btn-sm" style="background:rgba(96,165,250,.1);color:var(--blue);border-color:rgba(96,165,250,.3)" onclick="openCSModal('${g.id}')">
+          <svg data-lucide="target"></svg> CS
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon-only" title="Delete" onclick="openDeleteModal('${g.id}')">
+          <svg data-lucide="trash-2"></svg>
+        </button>
       </div>
     </div>`;
   }).join('');
-  lucide.createIcons();
 }
 
-function toggleGame(gameId) {
-  const id = String(gameId);
-  if (selectedGameIds.has(id)) {
-    selectedGameIds.delete(id);
-    delete pickConfig[id];
-  } else {
-    if (selectedGameIds.size >= 10) { showCreateError('Maximum 10 games per booking code.'); return; }
-    selectedGameIds.add(id);
-    const g = ALL_GAMES.find(x => String(x.id) === id);
-    pickConfig[id] = { pick: 'HOME_WIN', odds: g?.oddsHomeWin || 1.5, correctScoreOptionId: '', scorePrediction: '' };
-  }
-  renderGameSelector();
-  renderPicksList();
-  updatePicksVisibility();
+/* ─────────────────────────────────────────────────
+   Filter tabs
+───────────────────────────────────────────────── */
+function filterGames(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGamesTable();
 }
 
-function updatePicksVisibility() {
-  const has = selectedGameIds.size > 0;
-  document.getElementById('picksSection').style.display   = has ? 'block' : 'none';
-  document.getElementById('optionsSection').style.display = has ? 'block' : 'none';
-  if (has) document.getElementById('csNote').style.display = selectedCodeType === 'correctscore' ? 'flex' : 'none';
-  updateCombinedOdds();
+/* ─────────────────────────────────────────────────
+   Navigation
+───────────────────────────────────────────────── */
+function goToSettlement(gameId) {
+  window.location.href = `admin-settlement.html?gameId=${gameId}`;
 }
 
-function renderPicksList() {
-  const container = document.getElementById('picksList');
-  const isCS      = selectedCodeType === 'correctscore';
-  const games     = ALL_GAMES.filter(g => selectedGameIds.has(String(g.id)));
-
-  container.innerHTML = games.map(g => {
-    const id  = String(g.id);
-    const cfg = pickConfig[id] || { pick: 'HOME_WIN', odds: g.oddsHomeWin || 1.5 };
-
-    const standardFields = `
-      <div class="pick-seg">
-        <button onclick="setPick('${id}','HOME_WIN',${g.oddsHomeWin || 1.5},this)" class="${cfg.pick==='HOME_WIN'?'active-1':''}">1</button>
-        <button onclick="setPick('${id}','DRAW',${g.oddsDraw || 3.0},this)"        class="${cfg.pick==='DRAW'?'active-x':''}">X</button>
-        <button onclick="setPick('${id}','AWAY_WIN',${g.oddsAwayWin || 1.5},this)" class="${cfg.pick==='AWAY_WIN'?'active-2':''}">2</button>
-      </div>`;
-
-    const csFields = `
-      <div class="cs-score-section">
-        <div class="cs-score-label">
-          Score option
-          <span class="cs-auto-badge">auto-fetched</span>
-        </div>
-        <div id="csField_${id}">
-          <div class="cs-loading-row">
-            <div class="cs-spinner"></div>
-            <span>Fetching score options…</span>
-          </div>
-        </div>
-      </div>`;
-
-    return `<div class="pick-row">
-      <div class="pick-row-top">
-        <div>
-          <div class="pick-row-match">${g.homeTeam} vs ${g.awayTeam}</div>
-          <div style="font-size:.7rem;color:var(--t3)">${fmtDate(g.matchDate)}</div>
-        </div>
-        ${isCS ? '' : standardFields}
-        <input type="number" class="odds-input" id="odds_${id}"
-          value="${Number(cfg.odds).toFixed(2)}" min="1" step="0.01"
-          oninput="updateOdds('${id}',this.value)"
-          ${isCS ? 'readonly style="opacity:.6"' : ''}>
-      </div>
-      ${isCS ? csFields : ''}
-    </div>`;
-  }).join('');
-
-  if (isCS) {
-    games.forEach(g => loadCSOptionsForGame(String(g.id)));
-  }
+/* ─────────────────────────────────────────────────
+   Add / Edit modal
+───────────────────────────────────────────────── */
+function openAddModal() {
+  editingId = null;
+  document.getElementById('gameModalTitle').textContent = 'Add New Game';
+  document.getElementById('gameForm').reset();
+  document.getElementById('editGameId').value = '';
+  document.getElementById('saveGameTxt').textContent = 'Save Game';
+  document.getElementById('gameFormError').classList.remove('show');
+  openModal('gameModal');
 }
 
-async function loadCSOptionsForGame(gameId) {
-  const fieldEl = document.getElementById(`csField_${gameId}`);
-  if (!fieldEl) return;
-
-  try {
-    const options = await fetchCSOptions(gameId);
-    if (!fieldEl) return;
-
-    if (!options || options.length === 0) {
-      fieldEl.innerHTML = `<div class="cs-error-row">
-        <svg data-lucide="alert-circle" style="width:13px;height:13px;flex-shrink:0"></svg>
-        No score options available.
-        <button class="cs-retry-btn" onclick="retryCSOptions('${gameId}')">Retry</button>
-      </div>`;
-      lucide.createIcons(); return;
-    }
-
-    const currentCfg = pickConfig[gameId] || {};
-    const firstOpt   = options[0];
-
-    if (!currentCfg.correctScoreOptionId) {
-      const firstScore = firstOpt.scorePrediction || firstOpt.score || firstOpt.prediction || '';
-      pickConfig[gameId] = {
-        ...currentCfg,
-        correctScoreOptionId: firstOpt.id || firstOpt.optionId || firstOpt.correctScoreOptionId,
-        scorePrediction:      firstScore,
-        odds:                 firstOpt.odds || firstOpt.oddsValue || 1,
-      };
-      const oddsEl = document.getElementById(`odds_${gameId}`);
-      if (oddsEl) oddsEl.value = Number(pickConfig[gameId].odds).toFixed(2);
-      updateCombinedOdds();
-    }
-
-    const optionsHtml = options.map(opt => {
-      const optId    = opt.id || opt.optionId || opt.correctScoreOptionId || '';
-      const score    = opt.scorePrediction || opt.score || opt.prediction || '';
-      const optOdds  = Number(opt.odds || opt.oddsValue || 1).toFixed(2);
-      const selected = (pickConfig[gameId]?.correctScoreOptionId === optId) ? 'selected' : '';
-      const label    = score ? `${score}  (${optOdds}x)` : `(${optOdds}x)`;
-      return `<option value="${optId}" data-odds="${opt.odds || opt.oddsValue || 1}" data-score="${score}" ${selected}>${label}</option>`;
-    }).join('');
-
-    const currentSel  = pickConfig[gameId]?.correctScoreOptionId || '';
-    const currentOpt  = options.find(o => (o.id || o.optionId || o.correctScoreOptionId) === currentSel) || firstOpt;
-    const previewScore = currentOpt?.scorePrediction || currentOpt?.score || currentOpt?.prediction || '—';
-    const previewOdds  = Number(currentOpt?.odds || currentOpt?.oddsValue || 1).toFixed(2);
-
-    fieldEl.innerHTML = `
-      <div class="cs-select-wrap">
-        <select class="cs-score-select" id="csSel_${gameId}" onchange="onCSOptionChange('${gameId}', this)">
-          ${optionsHtml}
-        </select>
-      </div>
-      <div class="cs-selected-preview" id="csPreview_${gameId}">
-        <span class="cs-score-pill">${previewScore}</span>
-        <span class="cs-selected-meta">Odds: ${previewOdds}x</span>
-      </div>`;
-    lucide.createIcons();
-
-  } catch (err) {
-    if (!fieldEl) return;
-    fieldEl.innerHTML = `<div class="cs-error-row">
-      <svg data-lucide="alert-circle" style="width:13px;height:13px;flex-shrink:0"></svg>
-      Failed to load options.
-      <button class="cs-retry-btn" onclick="retryCSOptions('${gameId}')">Retry</button>
-    </div>`;
-    lucide.createIcons();
-  }
+function openEditModal(id) {
+  const g = GAMES.find(x => x.id === id);
+  if (!g) return;
+  editingId = id;
+  document.getElementById('gameModalTitle').textContent = 'Edit Game';
+  document.getElementById('editGameId').value   = id;
+  document.getElementById('homeTeam').value     = g.homeTeam;
+  document.getElementById('awayTeam').value     = g.awayTeam;
+  document.getElementById('matchDate').value    = (g.matchDate || '').slice(0, 16);
+  document.getElementById('bookingCode').value  = g.bookingCode || '';
+  document.getElementById('oddsH').value        = g.oddsHomeWin;
+  document.getElementById('oddsD').value        = g.oddsDraw;
+  document.getElementById('oddsA').value        = g.oddsAwayWin;
+  document.getElementById('saveGameTxt').textContent = 'Update Game';
+  document.getElementById('gameFormError').classList.remove('show');
+  openModal('gameModal');
 }
 
-function retryCSOptions(gameId) {
-  delete csOptionsCache[gameId];
-  const fieldEl = document.getElementById(`csField_${gameId}`);
-  if (fieldEl) {
-    fieldEl.innerHTML = `<div class="cs-loading-row"><div class="cs-spinner"></div><span>Fetching score options…</span></div>`;
-  }
-  loadCSOptionsForGame(gameId);
-}
+async function handleSaveGame(e) {
+  e.preventDefault();
+  const homeTeam    = document.getElementById('homeTeam').value.trim();
+  const awayTeam    = document.getElementById('awayTeam').value.trim();
+  const matchDate   = document.getElementById('matchDate').value;
+  const bookingCode = document.getElementById('bookingCode').value.trim();
+  const oddsHomeWin = parseFloat(document.getElementById('oddsH').value);
+  const oddsDraw    = parseFloat(document.getElementById('oddsD').value);
+  const oddsAwayWin = parseFloat(document.getElementById('oddsA').value);
 
-function onCSOptionChange(gameId, selectEl) {
-  const opt      = selectEl.options[selectEl.selectedIndex];
-  const optId    = selectEl.value;
-  const optOdds  = parseFloat(opt.getAttribute('data-odds')) || 1;
-  const optScore = opt.getAttribute('data-score') || '';
-
-  pickConfig[gameId] = {
-    ...pickConfig[gameId],
-    correctScoreOptionId: optId,
-    scorePrediction:      optScore,
-    odds:                 optOdds,
-  };
-
-  const oddsEl = document.getElementById(`odds_${gameId}`);
-  if (oddsEl) oddsEl.value = optOdds.toFixed(2);
-
-  const previewEl = document.getElementById(`csPreview_${gameId}`);
-  if (previewEl) {
-    previewEl.innerHTML = `
-      <span class="cs-score-pill">${optScore || '—'}</span>
-      <span class="cs-selected-meta">Odds: ${optOdds.toFixed(2)}x</span>`;
-  }
-  updateCombinedOdds();
-}
-
-function setPick(gameId, pick, defaultOdds, btn) {
-  const id = String(gameId);
-  pickConfig[id]      = pickConfig[id] || {};
-  pickConfig[id].pick = pick;
-  const oddsEl = document.getElementById('odds_' + id);
-  if (oddsEl && defaultOdds) { oddsEl.value = Number(defaultOdds).toFixed(2); pickConfig[id].odds = defaultOdds; }
-  const seg = btn.closest('.pick-seg');
-  seg.querySelectorAll('button').forEach(b => b.className = '');
-  btn.className = pick === 'HOME_WIN' ? 'active-1' : pick === 'DRAW' ? 'active-x' : 'active-2';
-  updateCombinedOdds();
-}
-
-function updateOdds(gameId, val) {
-  const id = String(gameId);
-  if (!pickConfig[id]) pickConfig[id] = {};
-  pickConfig[id].odds = parseFloat(val) || 1;
-  updateCombinedOdds();
-}
-
-function updateCombinedOdds() {
-  let combined = 1;
-  selectedGameIds.forEach(id => { combined *= parseFloat(pickConfig[id]?.odds || 1); });
-  document.getElementById('combinedOddsDisplay').textContent = combined.toFixed(2) + 'x';
-  document.getElementById('gameCountDisplay').textContent    = selectedGameIds.size;
-}
-
-/* ═══════════════════════════════════════════════
-   SUBMIT CREATE  ← FIX APPLIED HERE
-═══════════════════════════════════════════════ */
-async function submitCreate() {
-  document.getElementById('createError').classList.remove('show');
-  const isCS = selectedCodeType === 'correctscore';
-
-  if (selectedGameIds.size < 1) { showCreateError('Select at least 1 game.'); return; }
-
-  for (const id of selectedGameIds) {
-    const cfg = pickConfig[id];
-    if (!cfg || !cfg.odds || cfg.odds < 1) { showCreateError('All odds must be at least 1.00.'); return; }
-    if (!isCS && !cfg.pick)                { showCreateError('Please set a pick for all games.'); return; }
-    if (isCS && (!cfg.correctScoreOptionId || cfg.correctScoreOptionId.trim() === '')) {
-      const g = ALL_GAMES.find(x => String(x.id) === id);
-      showCreateError(`Please select a score option for ${g ? g.homeTeam + ' vs ' + g.awayTeam : 'all games'}.`);
-      return;
-    }
+  if (!homeTeam || !awayTeam || !matchDate || isNaN(oddsHomeWin) || isNaN(oddsDraw) || isNaN(oddsAwayWin)) {
+    document.getElementById('gameFormErrorMsg').textContent = 'Please fill all required fields.';
+    document.getElementById('gameFormError').classList.add('show');
+    return;
   }
 
-  const games = Array.from(selectedGameIds).map((id, idx) => {
-    const cfg  = pickConfig[id];
-    const base = { gameId: id, odds: parseFloat(cfg.odds), position: idx + 1 };
-    if (isCS) {
-      return {
-        ...base,
-        correctScoreOptionId: cfg.correctScoreOptionId.trim(),
-        scorePrediction: (cfg.scorePrediction || '').trim(),
-      };
-    } else {
-      return { ...base, pick: cfg.pick };
-    }
-  });
+  const payload = { homeTeam, awayTeam, matchDate, bookingCode, oddsHomeWin, oddsDraw, oddsAwayWin };
 
-  // ── FIX: always send expiresAt — default to 30 days if not filled ──
-  const expiresAtInput = document.getElementById('expiresAt').value;
-  let expiresAt;
-  if (expiresAtInput) {
-    expiresAt = expiresAtInput + ':00';
-  } else {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    // Format as "YYYY-MM-DDTHH:mm:ss" (no timezone suffix)
-    expiresAt = d.toISOString().slice(0, 19);
-  }
-
-  const payload  = { games, expiresAt };
-  const endpoint = isCS ? CS_API : STD_API;
-  const btn      = document.getElementById('createBtn');
+  const btn = document.getElementById('saveGameBtn');
+  const txt = document.getElementById('saveGameTxt');
   btn.classList.add('loading');
-  btn.textContent = 'Generating…';
+  txt.textContent = editingId ? 'Updating…' : 'Saving…';
+  document.getElementById('gameFormError').classList.remove('show');
 
   try {
-    const result = await bcFetch(endpoint, { method: 'POST', body: JSON.stringify(payload) });
-    closeCreateModal();
-    showPageSuccess(`${isCS ? 'Correct Score' : 'Standard'} booking code created: ${result.code || 'OK'}`);
-    await loadCodes();
+    if (editingId) {
+      const updated = await apiUpdateGame(editingId, payload);
+      const idx = GAMES.findIndex(g => g.id === editingId);
+      if (idx >= 0) GAMES[idx] = updated;
+      showAlert('success', 'Game updated successfully.');
+    } else {
+      const created = await apiAddGame(payload);
+      GAMES.unshift(created);
+      showAlert('success', 'Game added successfully.');
+    }
+    closeModal('gameModal');
+    renderGamesTable();
   } catch (err) {
-    showCreateError(err.message);
+    document.getElementById('gameFormErrorMsg').textContent = err.message;
+    document.getElementById('gameFormError').classList.add('show');
   } finally {
     btn.classList.remove('loading');
-    btn.innerHTML = '<svg data-lucide="ticket"></svg> Generate Code';
+    txt.textContent = editingId ? 'Update Game' : 'Save Game';
     lucide.createIcons();
   }
 }
 
-/* ═══════════════════════════════════════════════
-   DETAIL MODAL
-═══════════════════════════════════════════════ */
-function openDetailModal(code) {
-  currentDetailCode = code;
-  const isCS = code._type === 'CORRECT_SCORE';
-  document.getElementById('dmTitle').textContent = isCS ? 'Correct Score Code' : 'Standard Booking Code';
-  document.getElementById('dmCode').innerHTML    =
-    `<span class="code-display">${code.code}</span>
-     ${isCS ? '<span class="cs-badge" style="margin-left:.5rem">Correct Score</span>' : '<span class="std-badge" style="margin-left:.5rem">Standard</span>'}`;
+/* ─────────────────────────────────────────────────
+   Status modal
+───────────────────────────────────────────────── */
+function openStatusModal(id) {
+  const g = GAMES.find(x => x.id === id);
+  if (!g) return;
+  document.getElementById('statusGameId').value = id;
+  document.getElementById('statusModalDesc').textContent =
+    `${g.homeTeam} vs ${g.awayTeam} — current: ${g.status}`;
+  openModal('statusModal');
+}
 
-  let body = `
-    <div class="settle-info-row"><span style="color:var(--t2)">Status</span><span class="badge badge-${statusBadge(code.status)}">${code.status}</span></div>
-    <div class="settle-info-row"><span style="color:var(--t2)">Combined Odds</span><span style="font-family:var(--ffC);font-weight:800;color:var(--accent)">${Number(code.combinedOdds).toFixed(2)}x</span></div>
-    <div class="settle-info-row"><span style="color:var(--t2)">Games</span><span>${(code.games || []).length}</span></div>
-    ${code.expiresAt ? `<div class="settle-info-row"><span style="color:var(--t2)">Expires At</span><span>${fmtDate(code.expiresAt)}</span></div>` : ''}
-    <div style="margin-top:1rem;margin-bottom:.5rem;font-family:var(--ffC);font-size:.85rem;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase">Selections</div>`;
-
-  body += (code.games || []).map((g, i) => `
-    <div class="game-row">
-      <div class="game-pos">${g.position || i+1}</div>
-      <div class="game-info">
-        <div class="game-match">${g.homeTeam} vs ${g.awayTeam}</div>
-        <div class="game-date">${fmtDate(g.matchDate)}</div>
-      </div>
-      ${isCS ? `<span class="pick-badge pick-cs">${g.scorePrediction || 'CS'}</span>` : `<span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
-      <div class="game-odds">${Number(g.odds).toFixed(2)}x</div>
-    </div>`).join('');
-
-  document.getElementById('dmBody').innerHTML = body;
-
-  let footer = `<button class="btn btn-secondary" onclick="closeDetailModal()">Close</button>`;
-  if (code.status === 'ACTIVE') {
-    footer += `
-      <button class="btn btn-success" onclick="closeDetailModal();openSettleModal(currentDetailCode)">
-        <svg data-lucide="flag"></svg> Settle
-      </button>
-      <button class="btn btn-danger" onclick="closeDetailModal();disableCode('${code.id}','${code._type}')">
-        <svg data-lucide="ban"></svg> Disable
-      </button>`;
+async function setGameStatus(newStatus) {
+  const gameId = document.getElementById('statusGameId').value;
+  try {
+    if (newStatus === 'CANCELLED') {
+      await apiCancelGame(gameId);
+      const idx = GAMES.findIndex(g => g.id === gameId);
+      if (idx >= 0) GAMES[idx].status = 'CANCELLED';
+      showAlert('success', 'Game cancelled and all stakes refunded.');
+    } else {
+      const updated = await apiUpdateGameStatus(gameId, newStatus);
+      const idx = GAMES.findIndex(g => g.id === gameId);
+      if (idx >= 0) GAMES[idx] = updated;
+      showAlert('success', `Game status set to ${newStatus}.`);
+    }
+    closeModal('statusModal');
+    renderGamesTable();
+  } catch (err) {
+    showAlert('error', err.message);
   }
-  document.getElementById('dmFooter').innerHTML = footer;
-  document.getElementById('detailModal').classList.add('show');
-  lucide.createIcons();
 }
 
-function closeDetailModal() { document.getElementById('detailModal').classList.remove('show'); currentDetailCode = null; }
-
-/* ═══════════════════════════════════════════════
-   SETTLE MODAL
-═══════════════════════════════════════════════ */
-function openSettleModal(code) {
-  currentDetailCode = code;
-  document.getElementById('dmTitle').textContent = 'Settle Booking Code';
-  document.getElementById('dmCode').innerHTML    = `<span class="code-display">${code.code}</span>`;
-
-  let body = `<p style="font-size:.84rem;color:var(--t2);margin-bottom:1rem">
-    Enter the final score for each game then click <strong>Run Settlement</strong>.
-  </p>`;
-
-  body += (code.games || []).map((g, i) => `
-    <div class="game-row" style="margin-bottom:.5rem">
-      <div class="game-pos">${i+1}</div>
-      <div class="game-info">
-        <div class="game-match">${g.homeTeam} vs ${g.awayTeam}</div>
-        <div class="game-date">${fmtDate(g.matchDate)}</div>
-      </div>
-      ${code._type === 'CORRECT_SCORE' ? `<span class="pick-badge pick-cs">${g.scorePrediction || 'CS'}</span>` : `<span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
-      <button class="btn btn-secondary btn-sm" onclick="openScoreModal('${g.gameId}','${g.homeTeam}','${g.awayTeam}','${code.id}')">
-        <svg data-lucide="edit-2"></svg> Score
-      </button>
-    </div>`).join('');
-
-  document.getElementById('dmBody').innerHTML = body;
-  document.getElementById('dmFooter').innerHTML = `
-    <button class="btn btn-secondary" onclick="closeDetailModal()">Cancel</button>
-    <button class="btn btn-primary" onclick="runSettlement('${code.id}')">
-      <svg data-lucide="flag"></svg> Run Settlement
-    </button>`;
-  document.getElementById('detailModal').classList.add('show');
-  lucide.createIcons();
-}
-
-/* ═══════════════════════════════════════════════
-   SCORE MODAL
-═══════════════════════════════════════════════ */
-function openScoreModal(gameId, homeTeam, awayTeam, bookingCodeId) {
-  currentScoreGameId    = gameId;
-  currentScoreBookingId = bookingCodeId;
-  document.getElementById('scoreGameName').textContent  = homeTeam + ' vs ' + awayTeam;
-  document.getElementById('scoreHomeLabel').textContent = homeTeam;
-  document.getElementById('scoreAwayLabel').textContent = awayTeam;
-  document.getElementById('homeScoreInput').value       = '';
-  document.getElementById('awayScoreInput').value       = '';
-  document.getElementById('scoreError').classList.remove('show');
-  document.getElementById('scoreModal').classList.add('show');
-  lucide.createIcons();
-}
-
-function closeScoreModal() { document.getElementById('scoreModal').classList.remove('show'); currentScoreGameId = null; currentScoreBookingId = null; }
-
-async function submitScore() {
-  const home = parseInt(document.getElementById('homeScoreInput').value);
-  const away = parseInt(document.getElementById('awayScoreInput').value);
-  if (isNaN(home) || isNaN(away) || home < 0 || away < 0) {
-    document.getElementById('scoreErrorMsg').textContent = 'Please enter valid scores (0 or more).';
-    document.getElementById('scoreError').classList.add('show');
-    lucide.createIcons(); return;
+/* ─────────────────────────────────────────────────
+   DELETE SINGLE GAME
+   openDeleteModal  → stores id → confirmDelete calls apiDeleteGame
+───────────────────────────────────────────────── */
+function openDeleteModal(id) {
+  const g = GAMES.find(x => x.id === id);
+  if (!g) {
+    showAlert('error', 'Game not found — try refreshing.');
+    return;
   }
-  const btn = document.getElementById('scoreSubmitBtn');
+  // Store the ID in the hidden input
+  document.getElementById('deleteGameId').value = id;
+  document.getElementById('deleteConfirmMsg').textContent =
+    `"${g.homeTeam} vs ${g.awayTeam}" will be permanently deleted along with all its bet selections.`;
+  document.getElementById('deleteErrorAlert').classList.remove('show');
+  openModal('deleteModal');
+  lucide.createIcons();
+}
+
+async function confirmDelete() {
+  // Read the stored game ID
+  const gameId = document.getElementById('deleteGameId').value;
+
+  if (!gameId) {
+    showAlert('error', 'No game selected for deletion.');
+    return;
+  }
+
+  console.log('[confirmDelete] deleting gameId:', gameId);
+
+  const btn       = document.getElementById('deleteConfirmBtn');
+  const cancelBtn = document.getElementById('deleteCancelBtn');
+  btn.classList.add('loading');
+  btn.disabled    = true;
+  cancelBtn.disabled = true;
+  document.getElementById('deleteErrorAlert').classList.remove('show');
+
+  try {
+    await apiDeleteGame(gameId);                          // ← calls DELETE /admin/games/{id}
+    GAMES = GAMES.filter(g => g.id !== gameId);          // remove from local list
+    closeModal('deleteModal');
+    showAlert('success', 'Game deleted successfully.');
+    renderGamesTable();
+  } catch (err) {
+    // Show error inside the modal so user can see it
+    document.getElementById('deleteErrorMsg').textContent = err.message;
+    document.getElementById('deleteErrorAlert').classList.add('show');
+    console.error('[confirmDelete] error:', err);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled       = false;
+    cancelBtn.disabled = false;
+    lucide.createIcons();
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   DELETE ALL GAMES
+   Uses apiDeleteAllGames() from admin-api.js which
+   loops sequentially and reports progress.
+───────────────────────────────────────────────── */
+function openDeleteAllModal() {
+  // Refresh the game count shown in the modal
+  document.getElementById('deleteAllCount').textContent = GAMES.length;
+
+  const progress = document.getElementById('deleteAllProgress');
+  progress.style.display = 'none';
+  progress.textContent   = '';
+
+  const btn = document.getElementById('deleteAllConfirmBtn');
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  document.getElementById('deleteAllCancelBtn').disabled = false;
+
+  openModal('deleteAllModal');
+  lucide.createIcons();
+}
+
+async function confirmDeleteAll() {
+  const allGames = [...GAMES];
+
+  if (!allGames.length) {
+    showAlert('error', 'No games to delete.');
+    closeModal('deleteAllModal');
+    return;
+  }
+
+  const btn       = document.getElementById('deleteAllConfirmBtn');
+  const cancelBtn = document.getElementById('deleteAllCancelBtn');
+  const progress  = document.getElementById('deleteAllProgress');
+
+  btn.classList.add('loading');
+  btn.disabled    = true;
+  cancelBtn.disabled = true;
+  progress.style.display = 'block';
+  progress.textContent   = 'Starting…';
+
+  // Progress callback — updates the label in real time
+  const onProgress = (current, total, game) => {
+    progress.textContent = `Deleting ${current} of ${total}: ${game.homeTeam} vs ${game.awayTeam}…`;
+  };
+
+  try {
+    const { deleted, failed, errors } = await apiDeleteAllGames(allGames, onProgress);
+
+    // Remove successfully deleted games from local state
+    const deletedIds = new Set(
+      allGames
+        .filter((_, i) => !errors.find(e => e.game.id === allGames[i]?.id))
+        .map(g => g.id)
+    );
+    GAMES = GAMES.filter(g => !deletedIds.has(g.id));
+
+    // Reload from server to be safe
+    try { GAMES = await apiGetAllGames(); } catch { /* use local state */ }
+
+    closeModal('deleteAllModal');
+    renderGamesTable();
+
+    if (failed > 0) {
+      showAlert('error',
+        `Done — ${deleted} deleted, ${failed} failed. Check console for details.`);
+      errors.forEach(e => console.warn('[deleteAll] failed:', e.game.id, e.message));
+    } else {
+      showAlert('success', `${deleted} game${deleted !== 1 ? 's' : ''} deleted successfully.`);
+    }
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled       = false;
+    cancelBtn.disabled = false;
+    lucide.createIcons();
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   Correct Score modal
+───────────────────────────────────────────────── */
+function openCSModal(id) {
+  const g = GAMES.find(x => x.id === id);
+  if (!g) return;
+  document.getElementById('csGameId').value = id;
+  document.getElementById('csModalDesc').textContent = `${g.homeTeam} vs ${g.awayTeam}`;
+
+  const status = g.correctScoreMarketStatus || 'OPEN';
+  const statusClass = { OPEN:'upcoming', LOCKED:'live', SETTLED:'finished' }[status] || 'upcoming';
+  document.getElementById('csMarketStatus').innerHTML =
+    `<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem">
+      <span style="font-size:.78rem;color:var(--t2)">Market Status:</span>
+      <span class="badge badge-${statusClass}">${status}</span>
+    </div>`;
+
+  document.getElementById('csRevealForm').style.display  = status === 'LOCKED'   ? 'block' : 'none';
+  document.getElementById('csGenerateBtn').style.display = status === 'SETTLED'  ? 'none'  : '';
+  document.getElementById('csLockBtn').style.display     = status === 'OPEN'     ? ''      : 'none';
+
+  openModal('csModal');
+  lucide.createIcons();
+}
+
+async function generateCSOptions() {
+  const gameId = document.getElementById('csGameId').value;
+  const btn = document.getElementById('csGenerateBtn');
   btn.classList.add('loading');
   try {
-    await bcFetch(`${RESULT_API}/${currentScoreGameId}/result`, {
-      method: 'POST', body: JSON.stringify({ homeScore: home, awayScore: away }),
-    });
-    closeScoreModal();
-    showPageSuccess(`Score saved: ${home} – ${away}`);
+    await apiGenerateCSOptions(gameId);
+    showAlert('success', 'Correct score options generated.');
+    closeModal('csModal');
+    await loadGames();
   } catch (err) {
-    document.getElementById('scoreErrorMsg').textContent = err.message;
-    document.getElementById('scoreError').classList.add('show');
+    showAlert('error', err.message);
+  } finally {
+    btn.classList.remove('loading');
     lucide.createIcons();
-  } finally { btn.classList.remove('loading'); }
-}
-
-/* ═══════════════════════════════════════════════
-   SETTLEMENT
-═══════════════════════════════════════════════ */
-async function runSettlement(bookingCodeId) {
-  const btn = document.querySelector('#dmFooter .btn-primary');
-  if (btn) { btn.classList.add('loading'); btn.textContent = 'Settling…'; }
-  try {
-    await bcFetch(`${SETTLE_API}/${bookingCodeId}`, { method: 'POST' });
-    closeDetailModal();
-    showPageSuccess('Settlement complete! Bets have been settled.');
-    await loadCodes();
-  } catch (err) {
-    closeDetailModal();
-    showPageError('Settlement failed: ' + err.message);
   }
 }
 
-/* ═══════════════════════════════════════════════
-   DISABLE
-═══════════════════════════════════════════════ */
-async function disableCode(codeId, type) {
-  if (!confirm('Disable this booking code? Users will no longer be able to use it.')) return;
-  const endpoint = (type === 'CORRECT_SCORE' ? CS_API : STD_API) + `/${codeId}/disable`;
+async function lockCSMarket() {
+  const gameId = document.getElementById('csGameId').value;
+  const btn = document.getElementById('csLockBtn');
+  btn.classList.add('loading');
   try {
-    await bcFetch(endpoint, { method: 'PUT' });
-    showPageSuccess('Booking code disabled.');
-    await loadCodes();
+    const updated = await apiLockCSMarket(gameId);
+    const idx = GAMES.findIndex(g => g.id === gameId);
+    if (idx >= 0) GAMES[idx] = updated;
+    showAlert('success', 'Correct score market locked. No more bets accepted.');
+    closeModal('csModal');
+    renderGamesTable();
   } catch (err) {
-    showPageError('Failed to disable: ' + err.message);
+    showAlert('error', err.message);
+  } finally {
+    btn.classList.remove('loading');
+    lucide.createIcons();
   }
 }
 
-/* ═══════════════════════════════════════════════
-   HELPERS
-═══════════════════════════════════════════════ */
-function safeJson(obj) { return JSON.stringify(obj).replace(/'/g, "&#39;"); }
-function statusBadge(s) {
-  if (s === 'ACTIVE')   return 'success';
-  if (s === 'EXPIRED')  return 'finished';
-  if (s === 'DISABLED') return 'failed';
-  return 'pending';
-}
-function pickClass(pick) {
-  if (pick === 'HOME_WIN' || pick === '1') return 'p1';
-  if (pick === 'DRAW'     || pick === 'X') return 'px';
-  if (pick === 'AWAY_WIN' || pick === '2') return 'p2';
-  return '';
-}
-function pickBadgeClass(pick) {
-  if (pick === 'HOME_WIN') return 'pick-1';
-  if (pick === 'DRAW')     return 'pick-x';
-  if (pick === 'AWAY_WIN') return 'pick-2';
-  return '';
-}
-function pickLabel(pick) {
-  if (pick === 'HOME_WIN') return '1';
-  if (pick === 'DRAW')     return 'X';
-  if (pick === 'AWAY_WIN') return '2';
-  return pick || '?';
-}
-function fmtDate(dt) {
-  if (!dt) return '—';
+async function revealCSMarket() {
+  const gameId    = document.getElementById('csGameId').value;
+  const homeScore = parseInt(document.getElementById('csHomeScore').value, 10);
+  const awayScore = parseInt(document.getElementById('csAwayScore').value, 10);
+  if (isNaN(homeScore) || isNaN(awayScore)) {
+    showAlert('error', 'Please enter valid scores.');
+    return;
+  }
   try {
-    return new Date(dt).toLocaleString('en-GB', {
-      day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
-  } catch { return dt; }
+    const updated = await apiRevealCSMarket(gameId, homeScore, awayScore);
+    const idx = GAMES.findIndex(g => g.id === gameId);
+    if (idx >= 0) GAMES[idx] = updated;
+    showAlert('success', `Score revealed: ${homeScore}–${awayScore}. Correct score bets settled.`);
+    closeModal('csModal');
+    renderGamesTable();
+  } catch (err) {
+    showAlert('error', err.message);
+  }
 }
-function showPageError(msg) {
-  document.getElementById('pageErrorMsg').textContent = msg;
-  document.getElementById('pageError').classList.add('show');
-  document.getElementById('pageSuccess').classList.remove('show');
-  lucide.createIcons();
-  setTimeout(() => document.getElementById('pageError').classList.remove('show'), 6000);
+
+/* ─────────────────────────────────────────────────
+   Utilities
+───────────────────────────────────────────────── */
+function openModal(id)  { document.getElementById(id).classList.add('show');    lucide.createIcons(); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('en-GB', {
+    day:'2-digit', month:'short', year:'numeric',
+    hour:'2-digit', minute:'2-digit'
+  });
 }
-function showPageSuccess(msg) {
-  document.getElementById('pageSuccessMsg').textContent = msg;
-  document.getElementById('pageSuccess').classList.add('show');
-  document.getElementById('pageError').classList.remove('show');
-  lucide.createIcons();
-  setTimeout(() => document.getElementById('pageSuccess').classList.remove('show'), 4000);
+
+// Simple XSS-safe escaper for team names / codes rendered into innerHTML
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function showCreateError(msg) {
-  document.getElementById('createErrorMsg').textContent = msg;
-  document.getElementById('createError').classList.add('show');
+
+function showAlert(type, msg) {
+  const id    = type === 'success' ? 'gameSuccessAlert' : 'gameErrorAlert';
+  const msgId = type === 'success' ? 'gameSuccessMsg'   : 'gameErrorMsg';
+  document.getElementById(msgId).textContent = msg;
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 5000);
   lucide.createIcons();
 }
 </script>
