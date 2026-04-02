@@ -668,14 +668,8 @@ async function loadGames() {
 /* ═══════════════════════════════════════════════
    CORRECT SCORE OPTIONS — fetch/generate per game
 ═══════════════════════════════════════════════ */
-/**
- * Fetch correct score options for a game.
- * Uses POST /{gameId}/generate (which returns existing options or generates them).
- * Results are cached so we don't hammer the API.
- */
 async function fetchCSOptions(gameId) {
   if (csOptionsCache[gameId]) return csOptionsCache[gameId];
-  // POST to generate (idempotent — backend returns existing or creates new)
   const result = await bcFetch(`${CS_MKT_API}/${gameId}/generate`, { method: 'POST' });
   const options = Array.isArray(result) ? result : (result.options || result.content || []);
   csOptionsCache[gameId] = options;
@@ -942,7 +936,7 @@ async function loadCSOptionsForGame(gameId) {
 
   try {
     const options = await fetchCSOptions(gameId);
-    if (!fieldEl) return; // modal might have closed
+    if (!fieldEl) return;
 
     if (!options || options.length === 0) {
       fieldEl.innerHTML = `<div class="cs-error-row">
@@ -958,10 +952,11 @@ async function loadCSOptionsForGame(gameId) {
 
     // Auto-set first option if nothing selected yet
     if (!currentCfg.correctScoreOptionId) {
+      const firstScore = firstOpt.scorePrediction || firstOpt.score || firstOpt.prediction || '';
       pickConfig[gameId] = {
         ...currentCfg,
         correctScoreOptionId: firstOpt.id || firstOpt.optionId || firstOpt.correctScoreOptionId,
-        scorePrediction:      firstOpt.scorePrediction || firstOpt.score || firstOpt.prediction || '',
+        scorePrediction:      firstScore,
         odds:                 firstOpt.odds || firstOpt.oddsValue || 1,
       };
       const oddsEl = document.getElementById(`odds_${gameId}`);
@@ -969,16 +964,18 @@ async function loadCSOptionsForGame(gameId) {
       updateCombinedOdds();
     }
 
+    // ── FIX: dropdown shows "2-1  (4.40x)" — UUID is the value but never displayed ──
     const optionsHtml = options.map(opt => {
-      const optId    = opt.id || opt.optionId || opt.correctScoreOptionId || '';
-      const score    = opt.scorePrediction || opt.score || opt.prediction || optId;
-      const optOdds  = Number(opt.odds || opt.oddsValue || 1).toFixed(2);
+      const optId   = opt.id || opt.optionId || opt.correctScoreOptionId || '';
+      const score   = opt.scorePrediction || opt.score || opt.prediction || '';
+      const optOdds = Number(opt.odds || opt.oddsValue || 1).toFixed(2);
       const selected = (pickConfig[gameId]?.correctScoreOptionId === optId) ? 'selected' : '';
-      return `<option value="${optId}" data-odds="${opt.odds || opt.oddsValue || 1}" data-score="${score}" ${selected}>${score} &nbsp;(${optOdds}x)</option>`;
+      const label   = score ? `${score}  (${optOdds}x)` : `(${optOdds}x)`;
+      return `<option value="${optId}" data-odds="${opt.odds || opt.oddsValue || 1}" data-score="${score}" ${selected}>${label}</option>`;
     }).join('');
 
-    const currentSel  = pickConfig[gameId]?.correctScoreOptionId || '';
-    const currentOpt  = options.find(o => (o.id || o.optionId || o.correctScoreOptionId) === currentSel) || firstOpt;
+    const currentSel   = pickConfig[gameId]?.correctScoreOptionId || '';
+    const currentOpt   = options.find(o => (o.id || o.optionId || o.correctScoreOptionId) === currentSel) || firstOpt;
     const previewScore = currentOpt?.scorePrediction || currentOpt?.score || currentOpt?.prediction || '—';
     const previewOdds  = Number(currentOpt?.odds || currentOpt?.oddsValue || 1).toFixed(2);
 
@@ -1035,7 +1032,7 @@ function onCSOptionChange(gameId, selectEl) {
   const previewEl = document.getElementById(`csPreview_${gameId}`);
   if (previewEl) {
     previewEl.innerHTML = `
-      <span class="cs-score-pill">${optScore}</span>
+      <span class="cs-score-pill">${optScore || '—'}</span>
       <span class="cs-selected-meta">Odds: ${optOdds.toFixed(2)}x</span>`;
   }
   updateCombinedOdds();
@@ -1091,7 +1088,12 @@ async function submitCreate() {
     const cfg  = pickConfig[id];
     const base = { gameId: id, odds: parseFloat(cfg.odds), position: idx + 1 };
     if (isCS) {
-      return { ...base, correctScoreOptionId: cfg.correctScoreOptionId.trim(), scorePrediction: cfg.scorePrediction?.trim() || '' };
+      // ── FIX: always send scorePrediction — never blank ──
+      return {
+        ...base,
+        correctScoreOptionId: cfg.correctScoreOptionId.trim(),
+        scorePrediction: (cfg.scorePrediction || '').trim(),
+      };
     } else {
       return { ...base, pick: cfg.pick };
     }
