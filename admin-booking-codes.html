@@ -26,6 +26,85 @@
 }
 .code-display:hover { background: var(--accentBg2); }
 
+/* ── Code Type Selector ── */
+.code-type-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+.type-option {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all .18s;
+  background: var(--bg3);
+  position: relative;
+  overflow: hidden;
+}
+.type-option::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity .18s;
+}
+.type-option.standard::before  { background: rgba(34,197,94,.06); }
+.type-option.correctscore::before { background: rgba(251,191,36,.06); }
+.type-option:hover { border-color: var(--borderHov); }
+.type-option.selected.standard    { border-color: var(--green); background: rgba(34,197,94,.08); }
+.type-option.selected.correctscore { border-color: #f59e0b; background: rgba(245,158,11,.08); }
+.type-option.selected::before { opacity: 1; }
+.type-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: .6rem;
+}
+.type-icon.std  { background: rgba(34,197,94,.15); color: var(--green); }
+.type-icon.cs   { background: rgba(245,158,11,.15); color: #f59e0b; }
+.type-icon svg  { width: 18px; height: 18px; }
+.type-title  { font-size: .9rem; font-weight: 700; color: var(--t1); margin-bottom: .2rem; }
+.type-desc   { font-size: .72rem; color: var(--t2); line-height: 1.4; }
+.type-check  {
+  position: absolute; top: .6rem; right: .6rem;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.type-option.selected.standard   .type-check { background: var(--green); border-color: var(--green); }
+.type-option.selected.correctscore .type-check { background: #f59e0b; border-color: #f59e0b; }
+.type-check svg { width: 10px; height: 10px; color: #000; display: none; }
+.type-option.selected .type-check svg { display: block; }
+
+/* ── CS badge on cards ── */
+.cs-badge {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(245,158,11,.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,.3);
+}
+.std-badge {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(34,197,94,.12);
+  color: var(--green);
+  border: 1px solid rgba(34,197,94,.25);
+}
+
 .game-row {
   display: grid;
   grid-template-columns: 28px 1fr auto auto;
@@ -68,6 +147,7 @@
 .pick-1  { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
 .pick-x  { background: rgba(251,146,60,.12); color: var(--orange); border: 1px solid rgba(251,146,60,.25); }
 .pick-2  { background: rgba(96,165,250,.12); color: var(--blue); border: 1px solid rgba(96,165,250,.25); }
+.pick-cs { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.25); }
 .game-odds {
   font-family: var(--ffC);
   font-size: 1rem;
@@ -108,15 +188,18 @@
 .game-selector-item.selected .game-selector-check svg { display: block; }
 
 .pick-row {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto;
-  align-items: center;
-  gap: .5rem;
-  padding: .55rem .75rem;
+  padding: .65rem .75rem;
   border-radius: var(--r);
   background: var(--bg3);
   border: 1px solid var(--border);
-  margin-bottom: .4rem;
+  margin-bottom: .5rem;
+}
+.pick-row-top {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .45rem;
 }
 .pick-row-match { font-size: .8rem; font-weight: 600; }
 .pick-seg {
@@ -155,21 +238,28 @@
 }
 .odds-input:focus { border-color: var(--borderAcc); }
 
-.score-pred-input {
-  width: 80px;
+/* CS-only fields */
+.cs-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .5rem;
+  margin-top: .4rem;
+}
+.cs-field-label { font-size: .68rem; color: var(--t3); margin-bottom: 2px; }
+.score-pred-input, .cs-option-input {
+  width: 100%;
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 7px;
-  padding: 4px 8px;
+  padding: 5px 8px;
   font-family: var(--ff);
   font-size: .82rem;
   color: var(--t1);
-  text-align: center;
   outline: none;
   transition: border-color .15s;
-  placeholder-color: var(--t3);
+  box-sizing: border-box;
 }
-.score-pred-input:focus { border-color: var(--borderAcc); }
+.score-pred-input:focus, .cs-option-input:focus { border-color: #f59e0b; }
 
 .odds-strip {
   background: var(--bg3);
@@ -203,8 +293,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: .75rem;
-  margin-bottom: 1rem;
+  margin-bottom: .6rem;
 }
+.code-card-top-badges { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
 .code-card-meta {
   display: flex;
   gap: .5rem;
@@ -230,6 +321,7 @@
 .code-mini-game .pick.p1 { color: var(--green); }
 .code-mini-game .pick.px { color: var(--orange); }
 .code-mini-game .pick.p2 { color: var(--blue); }
+.code-mini-game .pick.pcs { color: #f59e0b; }
 .code-actions { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border); }
 
 .settle-info-row {
@@ -275,8 +367,8 @@
 .tab-btn.active { background: var(--accentBg); color: var(--accent); border-color: var(--borderAcc); }
 .tab-btn:hover:not(.active) { border-color: var(--borderHov); color: var(--t1); }
 
-.games-list-scroll { max-height: 260px; overflow-y: auto; padding-right: 2px; }
-.picks-list-scroll { max-height: 280px; overflow-y: auto; padding-right: 2px; }
+.games-list-scroll { max-height: 240px; overflow-y: auto; padding-right: 2px; }
+.picks-list-scroll { max-height: 300px; overflow-y: auto; padding-right: 2px; }
 
 .modal-search {
   width: 100%;
@@ -336,6 +428,20 @@
   flex-shrink: 0;
 }
 
+.cs-note {
+  background: rgba(245,158,11,.08);
+  border: 1px solid rgba(245,158,11,.2);
+  border-radius: 8px;
+  padding: .5rem .75rem;
+  font-size: .78rem;
+  color: #f59e0b;
+  margin-bottom: .75rem;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.cs-note svg { width: 14px; height: 14px; flex-shrink: 0; }
+
 .modal { max-width: 620px; }
 </style>
 </head>
@@ -381,9 +487,9 @@
         <div class="stat-label">Expired / Disabled</div>
       </div>
       <div class="stat-card anim-4">
-        <div class="stat-icon blue"><svg data-lucide="users"></svg></div>
-        <div class="stat-val" id="statBets">—</div>
-        <div class="stat-label">Total Bets Placed</div>
+        <div class="stat-icon blue"><svg data-lucide="target"></svg></div>
+        <div class="stat-val" id="statCS">—</div>
+        <div class="stat-label">Correct Score Codes</div>
       </div>
     </div>
 
@@ -391,7 +497,8 @@
       <div class="tabs" style="margin-bottom:0">
         <button class="tab-btn active" onclick="setFilter('ALL',this)">All</button>
         <button class="tab-btn" onclick="setFilter('ACTIVE',this)">Active</button>
-        <button class="tab-btn" onclick="setFilter('EXPIRED',this)">Expired</button>
+        <button class="tab-btn" onclick="setFilter('STANDARD',this)">Standard</button>
+        <button class="tab-btn" onclick="setFilter('CORRECT_SCORE',this)">Correct Score</button>
         <button class="tab-btn" onclick="setFilter('DISABLED',this)">Disabled</button>
       </div>
       <div class="search-wrap" style="max-width:260px;min-width:180px">
@@ -419,17 +526,40 @@
     <div class="modal-header">
       <div>
         <div class="modal-title">New Booking Code</div>
-        <div style="font-size:.78rem;color:var(--t2);margin-top:2px">Pick games, choose outcomes, set odds</div>
+        <div style="font-size:.78rem;color:var(--t2);margin-top:2px">Choose a slip type, pick games, set odds</div>
       </div>
       <button class="modal-close" onclick="closeCreateModal()"><svg data-lucide="x"></svg></button>
     </div>
 
-    <div class="step-label"><span class="step-num">1</span> Select Games (1–10)</div>
+    <!-- STEP 1: Type -->
+    <div class="step-label"><span class="step-num">1</span> Choose Slip Type</div>
+    <div class="code-type-selector">
+      <div class="type-option standard selected" id="typeStandard" onclick="selectCodeType('standard')">
+        <div class="type-check"><svg data-lucide="check"></svg></div>
+        <div class="type-icon std"><svg data-lucide="trending-up"></svg></div>
+        <div class="type-title">Standard</div>
+        <div class="type-desc">Home Win / Draw / Away Win predictions with 1X2 odds.</div>
+      </div>
+      <div class="type-option correctscore" id="typeCorrectScore" onclick="selectCodeType('correctscore')">
+        <div class="type-check"><svg data-lucide="check"></svg></div>
+        <div class="type-icon cs"><svg data-lucide="target"></svg></div>
+        <div class="type-title">Correct Score</div>
+        <div class="type-desc">Predict exact final scores for each game on the slip.</div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Games -->
+    <div class="step-label"><span class="step-num">2</span> Select Games (1–10)</div>
     <input type="text" class="modal-search" id="gameSearch" placeholder="Search by team…" oninput="renderGameSelector()">
     <div class="games-list-scroll" id="gamesList"></div>
 
+    <!-- STEP 3: Picks -->
     <div id="picksSection" style="display:none;margin-top:1rem">
-      <div class="step-label"><span class="step-num">2</span> Set Pick & Odds for Each Game</div>
+      <div class="step-label"><span class="step-num">3</span> <span id="picksStepLabel">Set Pick &amp; Odds for Each Game</span></div>
+      <div id="csNote" class="cs-note" style="display:none">
+        <svg data-lucide="info"></svg>
+        Enter the predicted score (e.g. <strong>2-1</strong>) and the correct score option ID for each game.
+      </div>
       <div class="picks-list-scroll" id="picksList"></div>
       <div class="odds-strip">
         <div>
@@ -443,19 +573,12 @@
       </div>
     </div>
 
+    <!-- STEP 4: Options -->
     <div id="optionsSection" style="display:none;margin-top:.75rem">
-      <div class="step-label"><span class="step-num">3</span> Options</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Expires At (optional)</label>
-          <input type="datetime-local" class="form-input" id="expiresAt">
-        </div>
-        <div class="form-group" style="display:flex;flex-direction:column;justify-content:flex-end">
-          <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
-            <input type="checkbox" id="includesScorePrediction" style="accent-color:var(--accent)" onchange="renderPicksList()">
-            Includes Score Prediction
-          </label>
-        </div>
+      <div class="step-label"><span class="step-num">4</span> Options</div>
+      <div class="form-group">
+        <label class="form-label">Expires At (optional)</label>
+        <input type="datetime-local" class="form-input" id="expiresAt">
       </div>
     </div>
 
@@ -498,7 +621,7 @@
       <button class="modal-close" onclick="closeScoreModal()"><svg data-lucide="x"></svg></button>
     </div>
     <p style="font-size:.85rem;color:var(--t2);margin-bottom:1rem">
-      Enter the final score for this game. This will determine the outcome of all bets on this booking code.
+      Enter the final score for this game to settle bets on this booking code.
     </p>
     <div class="score-wrap">
       <input type="number" class="score-input" id="homeScoreInput" min="0" max="99" placeholder="0">
@@ -523,17 +646,18 @@
 
 <script>
 /* ═══════════════════════════════════════════════
-   BOOKING CODES — SELF-CONTAINED JS
+   BOOKING CODES — UPDATED ENDPOINTS
 ═══════════════════════════════════════════════ */
 
-/* ── API endpoints ── */
-const BC_API     = 'https://kikiwebbackend.onrender.com/api/admin/booking-codes';
-const GAME_API   = 'https://kikiwebbackend.onrender.com/api/v1/admin/games';
-const SETTLE_API = 'https://kikiwebbackend.onrender.com/api/admin/settlement/booking-codes';
-const RESULT_API = 'https://kikiwebbackend.onrender.com/api/v1/admin/games';
+const BASE            = 'https://kikiwebbackend.onrender.com';
+const STD_API         = BASE + '/api/v1/booking-codes/standard';
+const CS_API          = BASE + '/api/v1/booking-codes/correct-score';
+const GAME_API        = BASE + '/api/v1/admin/games';
+const SETTLE_API      = BASE + '/api/admin/settlement/booking-codes';
+const RESULT_API      = BASE + '/api/v1/admin/games';
 
 /* ── State ── */
-let ALL_CODES             = [];
+let ALL_CODES             = [];   // merged from both endpoints
 let ALL_GAMES             = [];
 let selectedGameIds       = new Set();
 let pickConfig            = {};
@@ -543,6 +667,7 @@ const PER_PAGE            = 9;
 let currentDetailCode     = null;
 let currentScoreGameId    = null;
 let currentScoreBookingId = null;
+let selectedCodeType      = 'standard';   // 'standard' | 'correctscore'
 
 /* ══════════════════════════════════════════════
    AUTH HELPERS
@@ -552,12 +677,12 @@ function bcGetToken() {
       || localStorage.getItem('gstake_token')
       || null;
 }
-
+function bcGetAdminId() {
+  const admin = JSON.parse(localStorage.getItem('gstake_admin') || '{}');
+  return admin.id || admin.adminId || null;
+}
 function bcRequireAuth() {
-  if (!bcGetToken()) {
-    window.location.href = 'admin-login.html';
-    return false;
-  }
+  if (!bcGetToken()) { window.location.href = 'admin-login.html'; return false; }
   return true;
 }
 
@@ -565,14 +690,16 @@ function bcRequireAuth() {
    FETCH WRAPPER
 ══════════════════════════════════════════════ */
 async function bcFetch(url, options = {}) {
-  const token = bcGetToken();
+  const token   = bcGetToken();
+  const adminId = bcGetAdminId();
   const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(token   ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(adminId ? { 'X-Admin-Id': adminId }              : {}),
     ...(options.headers || {}),
   };
 
-  const res = await fetch(url, { ...options, headers });
+  const res  = await fetch(url, { ...options, headers });
 
   if (res.status === 401) {
     localStorage.removeItem('gstake_admin_token');
@@ -582,30 +709,25 @@ async function bcFetch(url, options = {}) {
   }
 
   const text = await res.text();
-  let data = {};
-  if (text) {
-    try { data = JSON.parse(text); } catch { data = {}; }
-  }
+  let data   = {};
+  if (text) { try { data = JSON.parse(text); } catch { data = {}; } }
 
   if (!res.ok) {
-    const message = data.message || data.error || `Request failed (${res.status})`;
-    throw new Error(message);
+    throw new Error(data.message || data.error || `Request failed (${res.status})`);
   }
 
   return data.data !== undefined ? data.data : data;
 }
 
 /* ══════════════════════════════════════════════
-   SIDEBAR INJECTION
+   SIDEBAR / SHELL
 ══════════════════════════════════════════════ */
 function injectShell() {
   const admin    = JSON.parse(localStorage.getItem('gstake_admin') || '{}');
-  const initials = (admin.fullName || 'Admin').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const initials = (admin.fullName || 'Admin').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
 
   document.getElementById('topNav').innerHTML = `
-    <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar">
-      <svg data-lucide="menu"></svg>
-    </button>
+    <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar"><svg data-lucide="menu"></svg></button>
     <a href="index.html" class="logo">G<em>S</em>TAKE</a>
     <span class="admin-badge">Admin Panel</span>
     <div class="nav-spacer"></div>
@@ -618,41 +740,32 @@ function injectShell() {
     </div>
     <div class="icon-btn" onclick="bcToggleTheme()" title="Toggle theme">
       <svg data-lucide="moon" id="themeIco"></svg>
-    </div>
-  `;
+    </div>`;
 
   const links = [
-    { href: 'index.html',                icon: 'layout-dashboard', label: 'Dashboard',           section: 'Overview'    },
-    { href: 'admin-users.html',          icon: 'users',            label: 'Users',               section: 'Management'  },
-    { href: 'admin-games.html',          icon: 'calendar',         label: 'Games & Odds',         section: 'Management'  },
-    { href: 'admin-settlement.html',     icon: 'flag',             label: 'Settlement & Results', section: 'Management'  },
-    { href: 'admin-transactions.html',   icon: 'arrow-left-right', label: 'Transactions',         section: 'Management'  },
-    { href: 'admin-bets.html',           icon: 'ticket',           label: 'Bet Slips',            section: 'Management'  },
-    { href: 'admin-booking-codes.html',  icon: 'qr-code',          label: 'Booking Codes',        section: 'Management'  },
+    { href:'index.html',               icon:'layout-dashboard', label:'Dashboard',           section:'Overview'   },
+    { href:'admin-users.html',         icon:'users',            label:'Users',               section:'Management' },
+    { href:'admin-games.html',         icon:'calendar',         label:'Games & Odds',         section:'Management' },
+    { href:'admin-settlement.html',    icon:'flag',             label:'Settlement & Results', section:'Management' },
+    { href:'admin-transactions.html',  icon:'arrow-left-right', label:'Transactions',         section:'Management' },
+    { href:'admin-bets.html',          icon:'ticket',           label:'Bet Slips',            section:'Management' },
+    { href:'admin-booking-codes.html', icon:'qr-code',          label:'Booking Codes',        section:'Management' },
   ];
 
-  let html = '';
-  let lastSection = '';
+  let html = ''; let lastSection = '';
   links.forEach(link => {
     if (link.section !== lastSection) {
       html += `<div class="sidebar-section-label">${link.section}</div>`;
       lastSection = link.section;
     }
     const active = link.href === 'admin-booking-codes.html' ? 'active' : '';
-    html += `
-      <a href="${link.href}" class="sidebar-link ${active}">
-        <svg data-lucide="${link.icon}"></svg>
-        <span>${link.label}</span>
-      </a>`;
+    html += `<a href="${link.href}" class="sidebar-link ${active}">
+      <svg data-lucide="${link.icon}"></svg><span>${link.label}</span></a>`;
   });
-
-  html += `
-    <div class="sidebar-bottom">
-      <button class="sidebar-logout" onclick="bcLogout()">
-        <svg data-lucide="log-out"></svg>
-        <span>Sign Out</span>
-      </button>
-    </div>`;
+  html += `<div class="sidebar-bottom">
+    <button class="sidebar-logout" onclick="bcLogout()">
+      <svg data-lucide="log-out"></svg><span>Sign Out</span>
+    </button></div>`;
 
   document.getElementById('sidebar').innerHTML = html;
   document.getElementById('sidebarOverlay').addEventListener('click', bcCloseSidebar);
@@ -694,13 +807,28 @@ async function loadAll() {
 }
 
 /* ══════════════════════════════════════════════
-   LOAD DATA
+   LOAD DATA — fetch both standard + correct-score
 ══════════════════════════════════════════════ */
 async function loadCodes() {
   try {
-    // FIX: fetch up to 200 at once so we don't silently miss codes beyond page 0
-    const data = await bcFetch(BC_API + '?size=200&sort=createdAt,desc');
-    ALL_CODES = Array.isArray(data) ? data : (data.content || []);
+    const adminId = bcGetAdminId();
+
+    // Fetch both lists in parallel
+    const [stdData, csData] = await Promise.all([
+      bcFetch(`${STD_API}/admin/mine?size=200&sort=createdAt,desc`).catch(() => ({ content: [] })),
+      bcFetch(`${CS_API}/admin/mine?size=200&sort=createdAt,desc`).catch(() => ({ content: [] })),
+    ]);
+
+    const stdCodes = (Array.isArray(stdData) ? stdData : (stdData.content || []))
+      .map(c => ({ ...c, _type: 'STANDARD' }));
+    const csCodes  = (Array.isArray(csData)  ? csData  : (csData.content  || []))
+      .map(c => ({ ...c, _type: 'CORRECT_SCORE' }));
+
+    // Merge and sort by createdAt desc
+    ALL_CODES = [...stdCodes, ...csCodes].sort((a, b) =>
+      new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
     updateStats();
     renderCodes();
   } catch (err) {
@@ -711,7 +839,7 @@ async function loadCodes() {
 async function loadGames() {
   try {
     const data = await bcFetch(GAME_API + '?size=200');
-    ALL_GAMES = (Array.isArray(data) ? data : (data.content || []))
+    ALL_GAMES  = (Array.isArray(data) ? data : (data.content || []))
       .filter(g => g.status === 'UPCOMING');
   } catch (err) {
     console.warn('Could not load games:', err.message);
@@ -722,11 +850,10 @@ async function loadGames() {
    STATS
 ══════════════════════════════════════════════ */
 function updateStats() {
-  document.getElementById('statTotal').textContent   = ALL_CODES.length;
-  document.getElementById('statActive').textContent  = ALL_CODES.filter(c => c.status === 'ACTIVE').length;
-  document.getElementById('statExpired').textContent = ALL_CODES.filter(c => c.status !== 'ACTIVE').length;
-  const totalBets = ALL_CODES.reduce((sum, c) => sum + (c.betCount || 0), 0);
-  document.getElementById('statBets').textContent = totalBets;
+  document.getElementById('statTotal').textContent  = ALL_CODES.length;
+  document.getElementById('statActive').textContent = ALL_CODES.filter(c => c.status === 'ACTIVE').length;
+  document.getElementById('statExpired').textContent= ALL_CODES.filter(c => c.status !== 'ACTIVE').length;
+  document.getElementById('statCS').textContent     = ALL_CODES.filter(c => c._type === 'CORRECT_SCORE').length;
 }
 
 /* ══════════════════════════════════════════════
@@ -741,9 +868,12 @@ function setFilter(f, btn) {
 }
 
 function renderCodes() {
-  const q = (document.getElementById('codeSearch').value || '').toUpperCase();
+  const q        = (document.getElementById('codeSearch').value || '').toUpperCase();
   const filtered = ALL_CODES.filter(c => {
-    if (codeFilter !== 'ALL' && c.status !== codeFilter) return false;
+    if (codeFilter === 'STANDARD'      && c._type  !== 'STANDARD')      return false;
+    if (codeFilter === 'CORRECT_SCORE' && c._type  !== 'CORRECT_SCORE') return false;
+    if (codeFilter === 'ACTIVE'        && c.status !== 'ACTIVE')         return false;
+    if (codeFilter === 'DISABLED'      && c.status !== 'DISABLED')       return false;
     if (q && !(c.code || '').includes(q)) return false;
     return true;
   });
@@ -762,24 +892,35 @@ function renderCodes() {
     return;
   }
 
-  grid.innerHTML = slice.map((c, i) => `
+  grid.innerHTML = slice.map((c, i) => {
+    const isCS      = c._type === 'CORRECT_SCORE';
+    const typeBadge = isCS
+      ? `<span class="cs-badge">Correct Score</span>`
+      : `<span class="std-badge">Standard</span>`;
+
+    return `
     <div class="code-card" style="animation-delay:${i * 0.04}s">
       <div class="code-card-top">
         <div>
           <div class="code-display" title="Click to copy" onclick="copyCode('${c.code}')">${c.code}</div>
         </div>
-        <span class="badge badge-${statusBadge(c.status)}">${c.status}</span>
+        <div class="code-card-top-badges">
+          ${typeBadge}
+          <span class="badge badge-${statusBadge(c.status)}">${c.status}</span>
+        </div>
       </div>
       <div class="code-card-meta">
         <span><svg data-lucide="layers"></svg>${c.gameCount || (c.games || []).length} games</span>
         <span><svg data-lucide="trending-up"></svg>${Number(c.combinedOdds || 0).toFixed(2)}x odds</span>
         ${c.expiresAt ? `<span><svg data-lucide="clock"></svg>Expires ${fmtDate(c.expiresAt)}</span>` : ''}
-        ${c.betCount  ? `<span><svg data-lucide="users"></svg>${c.betCount} bets</span>` : ''}
       </div>
       <div class="code-card-games">
         ${(c.games || []).slice(0, 3).map(g => `
           <div class="code-mini-game">
-            <span class="pick ${pickClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>
+            ${isCS
+              ? `<span class="pick pcs">${g.scorePrediction || 'CS'}</span>`
+              : `<span class="pick ${pickClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`
+            }
             <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.homeTeam} vs ${g.awayTeam}</span>
             <span style="font-family:var(--ffC);font-weight:700;color:var(--accent)">${Number(g.odds).toFixed(2)}x</span>
           </div>
@@ -787,19 +928,19 @@ function renderCodes() {
         ${(c.games || []).length > 3 ? `<div style="font-size:.75rem;color:var(--t3);padding:.2rem .5rem">+${(c.games.length - 3)} more games…</div>` : ''}
       </div>
       <div class="code-actions">
-        <button class="btn btn-secondary btn-sm" onclick='openDetailModal(${JSON.stringify(c)})'>
+        <button class="btn btn-secondary btn-sm" onclick='openDetailModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>
           <svg data-lucide="eye"></svg> View
         </button>
         ${c.status === 'ACTIVE' ? `
-          <button class="btn btn-success btn-sm" onclick='openSettleModal(${JSON.stringify(c)})'>
+          <button class="btn btn-success btn-sm" onclick='openSettleModal(${JSON.stringify(c).replace(/'/g,"&#39;")})'>
             <svg data-lucide="flag"></svg> Settle
           </button>
-          <button class="btn btn-danger btn-sm" onclick="disableCode('${c.id}')">
+          <button class="btn btn-danger btn-sm" onclick="disableCode('${c.id}','${c._type}')">
             <svg data-lucide="ban"></svg> Disable
           </button>` : ''}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 
   // Pagination
   let pages = '';
@@ -807,18 +948,21 @@ function renderCodes() {
     pages += `<button class="page-btn${i === PAGE ? ' active' : ''}" onclick="goPage(${i})">${i}</button>`;
   }
   document.getElementById('codesPagination').innerHTML =
-    `<button class="page-btn" onclick="goPage(${PAGE - 1})" ${PAGE <= 1 ? 'disabled' : ''}>←</button>
+    `<button class="page-btn" onclick="goPage(${PAGE-1})" ${PAGE<=1?'disabled':''}>←</button>
      ${pages}
      <span class="page-info">${filtered.length} codes</span>
-     <button class="page-btn" onclick="goPage(${PAGE + 1})" ${PAGE >= totalPages ? 'disabled' : ''}>→</button>`;
+     <button class="page-btn" onclick="goPage(${PAGE+1})" ${PAGE>=totalPages?'disabled':''}>→</button>`;
 
   lucide.createIcons();
 }
 
 function goPage(p) {
-  const q = document.getElementById('codeSearch').value;
+  const q        = document.getElementById('codeSearch').value;
   const filtered = ALL_CODES.filter(c => {
-    if (codeFilter !== 'ALL' && c.status !== codeFilter) return false;
+    if (codeFilter === 'STANDARD'      && c._type  !== 'STANDARD')      return false;
+    if (codeFilter === 'CORRECT_SCORE' && c._type  !== 'CORRECT_SCORE') return false;
+    if (codeFilter === 'ACTIVE'        && c.status !== 'ACTIVE')         return false;
+    if (codeFilter === 'DISABLED'      && c.status !== 'DISABLED')       return false;
     if (q && !(c.code || '').toUpperCase().includes(q.toUpperCase())) return false;
     return true;
   });
@@ -833,17 +977,44 @@ function copyCode(code) {
 }
 
 /* ══════════════════════════════════════════════
+   CODE TYPE SELECTOR
+══════════════════════════════════════════════ */
+function selectCodeType(type) {
+  selectedCodeType = type;
+  document.getElementById('typeStandard').classList.toggle('selected',    type === 'standard');
+  document.getElementById('typeCorrectScore').classList.toggle('selected', type === 'correctscore');
+
+  // Re-render picks if games already selected
+  if (selectedGameIds.size > 0) renderPicksList();
+
+  // Show/hide CS note
+  document.getElementById('csNote').style.display = type === 'correctscore' ? 'flex' : 'none';
+
+  // Update step 3 label
+  document.getElementById('picksStepLabel').textContent =
+    type === 'correctscore'
+      ? 'Set Score Prediction & Odds for Each Game'
+      : 'Set Pick & Odds for Each Game';
+
+  lucide.createIcons();
+}
+
+/* ══════════════════════════════════════════════
    CREATE MODAL
 ══════════════════════════════════════════════ */
 function openCreateModal() {
-  selectedGameIds = new Set();
-  pickConfig      = {};
-  document.getElementById('gameSearch').value                = '';
-  document.getElementById('expiresAt').value                 = '';
-  document.getElementById('includesScorePrediction').checked = false;
-  document.getElementById('picksSection').style.display      = 'none';
-  document.getElementById('optionsSection').style.display    = 'none';
+  selectedGameIds  = new Set();
+  pickConfig       = {};
+  selectedCodeType = 'standard';
+  document.getElementById('gameSearch').value  = '';
+  document.getElementById('expiresAt').value   = '';
+  document.getElementById('picksSection').style.display   = 'none';
+  document.getElementById('optionsSection').style.display = 'none';
   document.getElementById('createError').classList.remove('show');
+  document.getElementById('csNote').style.display = 'none';
+  document.getElementById('typeStandard').classList.add('selected');
+  document.getElementById('typeCorrectScore').classList.remove('selected');
+  document.getElementById('picksStepLabel').textContent = 'Set Pick & Odds for Each Game';
   renderGameSelector();
   document.getElementById('createModal').classList.add('show');
   lucide.createIcons();
@@ -893,13 +1064,10 @@ function toggleGame(gameId) {
     selectedGameIds.delete(id);
     delete pickConfig[id];
   } else {
-    if (selectedGameIds.size >= 10) {
-      showCreateError('Maximum 10 games per booking code.');
-      return;
-    }
+    if (selectedGameIds.size >= 10) { showCreateError('Maximum 10 games per booking code.'); return; }
     selectedGameIds.add(id);
     const g = ALL_GAMES.find(x => String(x.id) === id);
-    pickConfig[id] = { pick: 'HOME_WIN', odds: g?.oddsHomeWin || 1.5, scorePrediction: '' };
+    pickConfig[id] = { pick: 'HOME_WIN', odds: g?.oddsHomeWin || 1.5, scorePrediction: '', correctScoreOptionId: '' };
   }
   renderGameSelector();
   renderPicksList();
@@ -910,52 +1078,62 @@ function updatePicksVisibility() {
   const has = selectedGameIds.size > 0;
   document.getElementById('picksSection').style.display   = has ? 'block' : 'none';
   document.getElementById('optionsSection').style.display = has ? 'block' : 'none';
+  if (has) document.getElementById('csNote').style.display = selectedCodeType === 'correctscore' ? 'flex' : 'none';
   updateCombinedOdds();
 }
 
 function renderPicksList() {
-  const container  = document.getElementById('picksList');
-  const needsScore = document.getElementById('includesScorePrediction').checked;
-  const games      = ALL_GAMES.filter(g => selectedGameIds.has(String(g.id)));
+  const container = document.getElementById('picksList');
+  const isCS      = selectedCodeType === 'correctscore';
+  const games     = ALL_GAMES.filter(g => selectedGameIds.has(String(g.id)));
 
   container.innerHTML = games.map(g => {
     const id  = String(g.id);
-    const cfg = pickConfig[id] || { pick: 'HOME_WIN', odds: g.oddsHomeWin || 1.5, scorePrediction: '' };
-    return `<div class="pick-row" style="grid-template-columns: 1fr auto auto ${needsScore ? 'auto' : ''}">
-      <div>
-        <div class="pick-row-match">${g.homeTeam} vs ${g.awayTeam}</div>
-        <div style="font-size:.7rem;color:var(--t3)">${fmtDate(g.matchDate)}</div>
+    const cfg = pickConfig[id] || { pick: 'HOME_WIN', odds: g.oddsHomeWin || 1.5, scorePrediction: '', correctScoreOptionId: '' };
+
+    return `<div class="pick-row">
+      <div class="pick-row-top">
+        <div>
+          <div class="pick-row-match">${g.homeTeam} vs ${g.awayTeam}</div>
+          <div style="font-size:.7rem;color:var(--t3)">${fmtDate(g.matchDate)}</div>
+        </div>
+        ${isCS ? '' : `
+        <div class="pick-seg">
+          <button onclick="setPick('${id}','HOME_WIN',${g.oddsHomeWin || 1.5},this)" class="${cfg.pick==='HOME_WIN'?'active-1':''}">1</button>
+          <button onclick="setPick('${id}','DRAW',${g.oddsDraw || 3.0},this)"        class="${cfg.pick==='DRAW'?'active-x':''}">X</button>
+          <button onclick="setPick('${id}','AWAY_WIN',${g.oddsAwayWin || 1.5},this)" class="${cfg.pick==='AWAY_WIN'?'active-2':''}">2</button>
+        </div>`}
+        <input type="number" class="odds-input" id="odds_${id}"
+          value="${Number(cfg.odds).toFixed(2)}" min="1" step="0.01"
+          oninput="updateOdds('${id}',this.value)">
       </div>
-      <div class="pick-seg">
-        <button onclick="setPick('${id}','HOME_WIN',${g.oddsHomeWin || 1.5},this)"
-          class="${cfg.pick === 'HOME_WIN' ? 'active-1' : ''}">1</button>
-        <button onclick="setPick('${id}','DRAW',${g.oddsDraw || 3.0},this)"
-          class="${cfg.pick === 'DRAW' ? 'active-x' : ''}">X</button>
-        <button onclick="setPick('${id}','AWAY_WIN',${g.oddsAwayWin || 1.5},this)"
-          class="${cfg.pick === 'AWAY_WIN' ? 'active-2' : ''}">2</button>
-      </div>
-      <input type="number" class="odds-input" id="odds_${id}"
-        value="${Number(cfg.odds).toFixed(2)}" min="1" step="0.01"
-        oninput="updateOdds('${id}',this.value)">
-      ${needsScore ? `
-        <input type="text" class="score-pred-input" id="score_${id}"
-          placeholder="e.g. 2-1"
-          value="${cfg.scorePrediction || ''}"
-          oninput="updateScore('${id}',this.value)">
-      ` : ''}
+      ${isCS ? `
+      <div class="cs-fields">
+        <div>
+          <div class="cs-field-label">Score Prediction</div>
+          <input type="text" class="score-pred-input" id="score_${id}"
+            placeholder="e.g. 2-1"
+            value="${cfg.scorePrediction || ''}"
+            oninput="updateScorePred('${id}',this.value)">
+        </div>
+        <div>
+          <div class="cs-field-label">Correct Score Option ID</div>
+          <input type="text" class="cs-option-input" id="csopt_${id}"
+            placeholder="Option UUID"
+            value="${cfg.correctScoreOptionId || ''}"
+            oninput="updateCSOptionId('${id}',this.value)">
+        </div>
+      </div>` : ''}
     </div>`;
   }).join('');
 }
 
 function setPick(gameId, pick, defaultOdds, btn) {
   const id = String(gameId);
-  pickConfig[id]       = pickConfig[id] || {};
-  pickConfig[id].pick  = pick;
-  const oddsEl         = document.getElementById('odds_' + id);
-  if (oddsEl && defaultOdds) {
-    oddsEl.value           = Number(defaultOdds).toFixed(2);
-    pickConfig[id].odds    = defaultOdds;
-  }
+  pickConfig[id]      = pickConfig[id] || {};
+  pickConfig[id].pick = pick;
+  const oddsEl        = document.getElementById('odds_' + id);
+  if (oddsEl && defaultOdds) { oddsEl.value = Number(defaultOdds).toFixed(2); pickConfig[id].odds = defaultOdds; }
   const seg = btn.closest('.pick-seg');
   seg.querySelectorAll('button').forEach(b => b.className = '');
   btn.className = pick === 'HOME_WIN' ? 'active-1' : pick === 'DRAW' ? 'active-x' : 'active-2';
@@ -969,67 +1147,70 @@ function updateOdds(gameId, val) {
   updateCombinedOdds();
 }
 
-function updateScore(gameId, val) {
+function updateScorePred(gameId, val) {
   const id = String(gameId);
   if (!pickConfig[id]) pickConfig[id] = {};
   pickConfig[id].scorePrediction = val;
 }
 
+function updateCSOptionId(gameId, val) {
+  const id = String(gameId);
+  if (!pickConfig[id]) pickConfig[id] = {};
+  pickConfig[id].correctScoreOptionId = val;
+}
+
 function updateCombinedOdds() {
   let combined = 1;
-  selectedGameIds.forEach(id => {
-    combined *= parseFloat(pickConfig[id]?.odds || 1);
-  });
+  selectedGameIds.forEach(id => { combined *= parseFloat(pickConfig[id]?.odds || 1); });
   document.getElementById('combinedOddsDisplay').textContent = combined.toFixed(2) + 'x';
   document.getElementById('gameCountDisplay').textContent    = selectedGameIds.size;
 }
 
+/* ══════════════════════════════════════════════
+   SUBMIT CREATE — routes to correct endpoint
+══════════════════════════════════════════════ */
 async function submitCreate() {
   document.getElementById('createError').classList.remove('show');
+  const isCS = selectedCodeType === 'correctscore';
 
   if (selectedGameIds.size < 1) { showCreateError('Select at least 1 game.'); return; }
 
-  const needsScore = document.getElementById('includesScorePrediction').checked;
-
   for (const id of selectedGameIds) {
     const cfg = pickConfig[id];
-    if (!cfg || !cfg.pick)         { showCreateError('Please set a pick for all games.'); return; }
-    if (!cfg.odds || cfg.odds < 1) { showCreateError('All odds must be at least 1.00.'); return; }
-    if (needsScore && (!cfg.scorePrediction || cfg.scorePrediction.trim() === '')) {
+    if (!cfg || !cfg.odds || cfg.odds < 1) { showCreateError('All odds must be at least 1.00.'); return; }
+    if (!isCS && !cfg.pick)                { showCreateError('Please set a pick for all games.'); return; }
+    if (isCS  && (!cfg.scorePrediction || cfg.scorePrediction.trim() === '')) {
       showCreateError('Please enter a score prediction for all games.'); return;
+    }
+    if (isCS  && (!cfg.correctScoreOptionId || cfg.correctScoreOptionId.trim() === '')) {
+      showCreateError('Please enter a correct score option ID for all games.'); return;
     }
   }
 
   const games = Array.from(selectedGameIds).map((id, idx) => {
     const cfg = pickConfig[id];
-    return {
-      gameId:          id,
-      pick:            cfg.pick,
-      odds:            parseFloat(cfg.odds),
-      position:        idx + 1,
-      scorePrediction: needsScore ? cfg.scorePrediction : null,
-    };
+    const base = { gameId: id, odds: parseFloat(cfg.odds), position: idx + 1 };
+    if (isCS) {
+      return { ...base, scorePrediction: cfg.scorePrediction.trim(), correctScoreOptionId: cfg.correctScoreOptionId.trim() };
+    } else {
+      return { ...base, pick: cfg.pick };
+    }
   });
 
-  const payload = {
-    games,
-    includesScorePrediction: needsScore,
-  };
-
+  const payload = { games };
   const expiresAt = document.getElementById('expiresAt').value;
   if (expiresAt) payload.expiresAt = expiresAt + ':00';
+
+  const endpoint = isCS ? CS_API : STD_API;
 
   const btn = document.getElementById('createBtn');
   btn.classList.add('loading');
   btn.textContent = 'Generating…';
 
   try {
-    const result = await bcFetch(BC_API, {
-      method: 'POST',
-      body:   JSON.stringify(payload),
-    });
+    const result = await bcFetch(endpoint, { method: 'POST', body: JSON.stringify(payload) });
     closeCreateModal();
-    showPageSuccess(`Booking code created: ${result.code || 'OK'}`);
+    showPageSuccess(`${isCS ? 'Correct Score' : 'Standard'} booking code created: ${result.code || 'OK'}`);
     await loadCodes();
   } catch (err) {
     showCreateError(err.message);
@@ -1045,8 +1226,11 @@ async function submitCreate() {
 ══════════════════════════════════════════════ */
 function openDetailModal(code) {
   currentDetailCode = code;
-  document.getElementById('dmTitle').textContent = 'Booking Code Details';
-  document.getElementById('dmCode').innerHTML    = `<span class="code-display">${code.code}</span>`;
+  const isCS = code._type === 'CORRECT_SCORE';
+  document.getElementById('dmTitle').textContent = isCS ? 'Correct Score Code' : 'Standard Booking Code';
+  document.getElementById('dmCode').innerHTML    =
+    `<span class="code-display">${code.code}</span>
+     ${isCS ? '<span class="cs-badge" style="margin-left:.5rem">Correct Score</span>' : '<span class="std-badge" style="margin-left:.5rem">Standard</span>'}`;
 
   let body = `
     <div class="settle-info-row"><span style="color:var(--t2)">Status</span>
@@ -1056,21 +1240,20 @@ function openDetailModal(code) {
     <div class="settle-info-row"><span style="color:var(--t2)">Games</span>
       <span>${(code.games || []).length}</span></div>
     ${code.expiresAt ? `<div class="settle-info-row"><span style="color:var(--t2)">Expires At</span><span>${fmtDate(code.expiresAt)}</span></div>` : ''}
-    ${code.betCount !== undefined ? `<div class="settle-info-row"><span style="color:var(--t2)">Bets Placed</span><span>${code.betCount}</span></div>` : ''}
-    <div style="margin-top:1rem;margin-bottom:.5rem;font-family:var(--ffC);font-size:.85rem;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase">Selections</div>
-  `;
+    <div style="margin-top:1rem;margin-bottom:.5rem;font-family:var(--ffC);font-size:.85rem;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase">Selections</div>`;
 
   body += (code.games || []).map((g, i) => `
     <div class="game-row">
-      <div class="game-pos">${g.position || i + 1}</div>
+      <div class="game-pos">${g.position || i+1}</div>
       <div class="game-info">
         <div class="game-match">${g.homeTeam} vs ${g.awayTeam}</div>
         <div class="game-date">${fmtDate(g.matchDate)}</div>
       </div>
-      <span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>
+      ${isCS
+        ? `<span class="pick-badge pick-cs">${g.scorePrediction || 'CS'}</span>`
+        : `<span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
       <div class="game-odds">${Number(g.odds).toFixed(2)}x</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 
   document.getElementById('dmBody').innerHTML = body;
 
@@ -1080,7 +1263,7 @@ function openDetailModal(code) {
       <button class="btn btn-success" onclick="closeDetailModal();openSettleModal(currentDetailCode)">
         <svg data-lucide="flag"></svg> Settle
       </button>
-      <button class="btn btn-danger" onclick="closeDetailModal();disableCode('${code.id}')">
+      <button class="btn btn-danger" onclick="closeDetailModal();disableCode('${code.id}','${code._type}')">
         <svg data-lucide="ban"></svg> Disable
       </button>`;
   }
@@ -1108,26 +1291,25 @@ function openSettleModal(code) {
 
   body += (code.games || []).map((g, i) => `
     <div class="game-row" style="margin-bottom:.5rem">
-      <div class="game-pos">${i + 1}</div>
+      <div class="game-pos">${i+1}</div>
       <div class="game-info">
         <div class="game-match">${g.homeTeam} vs ${g.awayTeam}</div>
         <div class="game-date">${fmtDate(g.matchDate)}</div>
       </div>
-      <span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>
+      ${code._type === 'CORRECT_SCORE'
+        ? `<span class="pick-badge pick-cs">${g.scorePrediction || 'CS'}</span>`
+        : `<span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
       <button class="btn btn-secondary btn-sm" onclick="openScoreModal('${g.gameId}','${g.homeTeam}','${g.awayTeam}','${code.id}')">
         <svg data-lucide="edit-2"></svg> Score
       </button>
-    </div>
-  `).join('');
+    </div>`).join('');
 
   document.getElementById('dmBody').innerHTML = body;
   document.getElementById('dmFooter').innerHTML = `
     <button class="btn btn-secondary" onclick="closeDetailModal()">Cancel</button>
     <button class="btn btn-primary" onclick="runSettlement('${code.id}')">
       <svg data-lucide="flag"></svg> Run Settlement
-    </button>
-  `;
-
+    </button>`;
   document.getElementById('detailModal').classList.add('show');
   lucide.createIcons();
 }
@@ -1150,24 +1332,19 @@ function openScoreModal(gameId, homeTeam, awayTeam, bookingCodeId) {
 
 function closeScoreModal() {
   document.getElementById('scoreModal').classList.remove('show');
-  currentScoreGameId    = null;
-  currentScoreBookingId = null;
+  currentScoreGameId = null; currentScoreBookingId = null;
 }
 
 async function submitScore() {
   const home = parseInt(document.getElementById('homeScoreInput').value);
   const away = parseInt(document.getElementById('awayScoreInput').value);
-
   if (isNaN(home) || isNaN(away) || home < 0 || away < 0) {
     document.getElementById('scoreErrorMsg').textContent = 'Please enter valid scores (0 or more).';
     document.getElementById('scoreError').classList.add('show');
-    lucide.createIcons();
-    return;
+    lucide.createIcons(); return;
   }
-
   const btn = document.getElementById('scoreSubmitBtn');
   btn.classList.add('loading');
-
   try {
     await bcFetch(`${RESULT_API}/${currentScoreGameId}/result`, {
       method: 'POST',
@@ -1179,9 +1356,7 @@ async function submitScore() {
     document.getElementById('scoreErrorMsg').textContent = err.message;
     document.getElementById('scoreError').classList.add('show');
     lucide.createIcons();
-  } finally {
-    btn.classList.remove('loading');
-  }
+  } finally { btn.classList.remove('loading'); }
 }
 
 /* ══════════════════════════════════════════════
@@ -1190,7 +1365,6 @@ async function submitScore() {
 async function runSettlement(bookingCodeId) {
   const btn = document.querySelector('#dmFooter .btn-primary');
   if (btn) { btn.classList.add('loading'); btn.textContent = 'Settling…'; }
-
   try {
     await bcFetch(`${SETTLE_API}/${bookingCodeId}`, { method: 'POST' });
     closeDetailModal();
@@ -1203,12 +1377,13 @@ async function runSettlement(bookingCodeId) {
 }
 
 /* ══════════════════════════════════════════════
-   DISABLE CODE
+   DISABLE — routes to correct endpoint by type
 ══════════════════════════════════════════════ */
-async function disableCode(codeId) {
-  if (!confirm('Disable this booking code? Users will no longer be able to bet on it.')) return;
+async function disableCode(codeId, type) {
+  if (!confirm('Disable this booking code? Users will no longer be able to use it.')) return;
+  const endpoint = (type === 'CORRECT_SCORE' ? CS_API : STD_API) + `/${codeId}/disable`;
   try {
-    await bcFetch(`${BC_API}/${codeId}/disable`, { method: 'PATCH' });
+    await bcFetch(endpoint, { method: 'PUT' });
     showPageSuccess('Booking code disabled.');
     await loadCodes();
   } catch (err) {
@@ -1219,45 +1394,38 @@ async function disableCode(codeId) {
 /* ══════════════════════════════════════════════
    HELPERS
 ══════════════════════════════════════════════ */
-function statusBadge(status) {
-  if (status === 'ACTIVE')   return 'success';
-  if (status === 'EXPIRED')  return 'finished';
-  if (status === 'DISABLED') return 'failed';
+function statusBadge(s) {
+  if (s === 'ACTIVE')   return 'success';
+  if (s === 'EXPIRED')  return 'finished';
+  if (s === 'DISABLED') return 'failed';
   return 'pending';
 }
-
 function pickClass(pick) {
-  if (!pick) return '';
   if (pick === 'HOME_WIN' || pick === '1') return 'p1';
   if (pick === 'DRAW'     || pick === 'X') return 'px';
   if (pick === 'AWAY_WIN' || pick === '2') return 'p2';
   return '';
 }
-
 function pickBadgeClass(pick) {
   if (pick === 'HOME_WIN') return 'pick-1';
   if (pick === 'DRAW')     return 'pick-x';
   if (pick === 'AWAY_WIN') return 'pick-2';
   return '';
 }
-
 function pickLabel(pick) {
   if (pick === 'HOME_WIN') return '1';
   if (pick === 'DRAW')     return 'X';
   if (pick === 'AWAY_WIN') return '2';
   return pick || '?';
 }
-
 function fmtDate(dt) {
   if (!dt) return '—';
   try {
     return new Date(dt).toLocaleString('en-GB', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit'
+      day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'
     });
   } catch { return dt; }
 }
-
 function showPageError(msg) {
   document.getElementById('pageErrorMsg').textContent = msg;
   document.getElementById('pageError').classList.add('show');
@@ -1265,7 +1433,6 @@ function showPageError(msg) {
   lucide.createIcons();
   setTimeout(() => document.getElementById('pageError').classList.remove('show'), 6000);
 }
-
 function showPageSuccess(msg) {
   document.getElementById('pageSuccessMsg').textContent = msg;
   document.getElementById('pageSuccess').classList.add('show');
@@ -1273,7 +1440,6 @@ function showPageSuccess(msg) {
   lucide.createIcons();
   setTimeout(() => document.getElementById('pageSuccess').classList.remove('show'), 4000);
 }
-
 function showCreateError(msg) {
   document.getElementById('createErrorMsg').textContent = msg;
   document.getElementById('createError').classList.add('show');
