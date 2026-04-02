@@ -9,8 +9,6 @@
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <link rel="stylesheet" href="admin-shared.css">
 <style>
-
-/* ── Booking Code specific styles ── */
 .code-display {
   font-family: var(--ffC);
   font-size: 1.5rem;
@@ -79,7 +77,6 @@
   text-align: right;
 }
 
-/* ── Game selector in create modal ── */
 .game-selector-item {
   display: flex;
   align-items: center;
@@ -110,7 +107,6 @@
 .game-selector-check svg { width: 12px; height: 12px; color: #000; display: none; }
 .game-selector-item.selected .game-selector-check svg { display: block; }
 
-/* pick-row inside create modal */
 .pick-row {
   display: grid;
   grid-template-columns: 1fr auto auto auto;
@@ -159,7 +155,6 @@
 }
 .odds-input:focus { border-color: var(--borderAcc); }
 
-/* combined odds strip */
 .odds-strip {
   background: var(--bg3);
   border: 1px solid var(--border);
@@ -178,7 +173,6 @@
   color: var(--accent);
 }
 
-/* code card */
 .code-card {
   background: var(--bg2);
   border: 1px solid var(--border);
@@ -205,11 +199,7 @@
 }
 .code-card-meta span { display: flex; align-items: center; gap: 4px; }
 .code-card-meta svg { width: 12px; height: 12px; }
-.code-card-games {
-  display: flex;
-  flex-direction: column;
-  gap: .35rem;
-}
+.code-card-games { display: flex; flex-direction: column; gap: .35rem; }
 .code-mini-game {
   display: flex;
   align-items: center;
@@ -226,7 +216,6 @@
 .code-mini-game .pick.p2 { color: var(--blue); }
 .code-actions { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border); }
 
-/* settle modal */
 .settle-info-row {
   display: flex;
   justify-content: space-between;
@@ -237,7 +226,6 @@
 }
 .settle-info-row:last-child { border-bottom: none; }
 
-/* score inputs */
 .score-wrap {
   display: flex;
   align-items: center;
@@ -274,7 +262,6 @@
 .games-list-scroll { max-height: 260px; overflow-y: auto; padding-right: 2px; }
 .picks-list-scroll { max-height: 240px; overflow-y: auto; padding-right: 2px; }
 
-/* search in modal */
 .modal-search {
   width: 100%;
   background: var(--bg3);
@@ -298,11 +285,7 @@
 .page-btn[disabled] { opacity: .35; cursor: not-allowed; }
 .page-info { font-size: .8rem; color: var(--t2); padding: 0 .5rem; }
 
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--t2);
-}
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--t2); }
 .empty-state svg { width: 40px; height: 40px; margin-bottom: 1rem; opacity: .3; }
 .empty-state p { font-size: .9rem; }
 
@@ -338,7 +321,6 @@
 }
 
 .modal { max-width: 620px; }
-
 </style>
 </head>
 <body>
@@ -351,7 +333,6 @@
 <main class="main">
   <div class="page-content">
 
-    <!-- Page header -->
     <div class="page-header">
       <div>
         <div class="page-title">Booking Codes</div>
@@ -367,7 +348,6 @@
       </div>
     </div>
 
-    <!-- Stats row -->
     <div class="stat-grid" style="margin-bottom:1.5rem">
       <div class="stat-card anim-1">
         <div class="stat-icon accent"><svg data-lucide="ticket"></svg></div>
@@ -391,7 +371,6 @@
       </div>
     </div>
 
-    <!-- Filter tabs + search -->
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
       <div class="tabs" style="margin-bottom:0">
         <button class="tab-btn active" onclick="setFilter('ALL',this)">All</button>
@@ -405,7 +384,6 @@
       </div>
     </div>
 
-    <!-- Alerts -->
     <div class="alert alert-error" id="pageError" style="margin-bottom:1rem">
       <svg data-lucide="alert-circle"></svg><span id="pageErrorMsg"></span>
     </div>
@@ -413,16 +391,13 @@
       <svg data-lucide="check-circle"></svg><span id="pageSuccessMsg"></span>
     </div>
 
-    <!-- Codes grid -->
     <div id="codesGrid" class="codes-grid"></div>
     <div class="pagination" id="codesPagination"></div>
 
   </div>
 </main>
 
-<!-- ══════════════════════════════════
-     CREATE MODAL
-══════════════════════════════════ -->
+<!-- CREATE MODAL -->
 <div class="modal-backdrop" id="createModal">
   <div class="modal">
     <div class="modal-header">
@@ -433,17 +408,13 @@
       <button class="modal-close" onclick="closeCreateModal()"><svg data-lucide="x"></svg></button>
     </div>
 
-    <!-- Step 1: pick games -->
     <div class="step-label"><span class="step-num">1</span> Select Games (1–10)</div>
     <input type="text" class="modal-search" id="gameSearch" placeholder="Search by team…" oninput="renderGameSelector()">
     <div class="games-list-scroll" id="gamesList"></div>
 
-    <!-- Step 2: configure picks -->
     <div id="picksSection" style="display:none;margin-top:1rem">
       <div class="step-label"><span class="step-num">2</span> Set Pick & Odds for Each Game</div>
       <div class="picks-list-scroll" id="picksList"></div>
-
-      <!-- Combined odds -->
       <div class="odds-strip">
         <div>
           <div class="odds-strip-label">Combined Odds</div>
@@ -456,7 +427,6 @@
       </div>
     </div>
 
-    <!-- Step 3: options -->
     <div id="optionsSection" style="display:none;margin-top:.75rem">
       <div class="step-label"><span class="step-num">3</span> Options</div>
       <div class="form-row">
@@ -486,9 +456,7 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     DETAIL / SETTLE MODAL
-══════════════════════════════════ -->
+<!-- DETAIL MODAL -->
 <div class="modal-backdrop" id="detailModal">
   <div class="modal">
     <div class="modal-header">
@@ -498,16 +466,12 @@
       </div>
       <button class="modal-close" onclick="closeDetailModal()"><svg data-lucide="x"></svg></button>
     </div>
-
     <div id="dmBody"></div>
-
     <div class="modal-footer" id="dmFooter"></div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     SETTLE GAME SCORE MODAL
-══════════════════════════════════ -->
+<!-- SCORE MODAL -->
 <div class="modal-backdrop" id="scoreModal">
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
@@ -517,11 +481,9 @@
       </div>
       <button class="modal-close" onclick="closeScoreModal()"><svg data-lucide="x"></svg></button>
     </div>
-
     <p style="font-size:.85rem;color:var(--t2);margin-bottom:1rem">
-      Enter the final score for this game. This will be used to determine the outcome of all bets on this booking code.
+      Enter the final score for this game. This will determine the outcome of all bets on this booking code.
     </p>
-
     <div class="score-wrap">
       <input type="number" class="score-input" id="homeScoreInput" min="0" max="99" placeholder="0">
       <div class="score-vs">–</div>
@@ -531,11 +493,9 @@
       <span id="scoreHomeLabel">Home</span>
       <span id="scoreAwayLabel">Away</span>
     </div>
-
     <div class="alert alert-error" id="scoreError">
       <svg data-lucide="alert-circle"></svg><span id="scoreErrorMsg"></span>
     </div>
-
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeScoreModal()">Cancel</button>
       <button class="btn btn-primary" id="scoreSubmitBtn" onclick="submitScore()">
@@ -545,33 +505,173 @@
   </div>
 </div>
 
-<script src="admin-api.js"></script>
-<script src="admin-sidebar.js"></script>
 <script>
-/* ══════════════════════════════════════════════════════
-   CONSTANTS & STATE
-══════════════════════════════════════════════════════ */
-const BC_API   = 'https://kikiwebbackend.onrender.com/api/admin/booking-codes';
-const GAME_API = 'https://kikiwebbackend.onrender.com/api/v1/admin/games';
+/* ═══════════════════════════════════════════════
+   BOOKING CODES — SELF-CONTAINED JS
+   No shared admin-api.js or admin-sidebar.js
+═══════════════════════════════════════════════ */
+
+/* ── API endpoints ── */
+const BC_API     = 'https://kikiwebbackend.onrender.com/api/admin/booking-codes';
+const GAME_API   = 'https://kikiwebbackend.onrender.com/api/v1/admin/games';
 const SETTLE_API = 'https://kikiwebbackend.onrender.com/api/admin/settlement/booking-codes';
+const RESULT_API = 'https://kikiwebbackend.onrender.com/api/v1/admin/games';
 
-let ALL_CODES    = [];
-let ALL_GAMES    = [];
-let selectedGameIds = new Set();   // for create modal
-let pickConfig   = {};             // gameId -> { pick, odds }
-let codeFilter   = 'ALL';
-let PAGE         = 1;
-const PER_PAGE   = 9;
-let currentDetailCode = null;      // code object currently in detail modal
-let currentScoreGameId = null;
-let currentScoreBookingCodeId = null;
+/* ── State ── */
+let ALL_CODES        = [];
+let ALL_GAMES        = [];
+let selectedGameIds  = new Set();
+let pickConfig       = {};
+let codeFilter       = 'ALL';
+let PAGE             = 1;
+const PER_PAGE       = 9;
+let currentDetailCode    = null;
+let currentScoreGameId   = null;
+let currentScoreBookingId = null;
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
+   AUTH HELPERS
+══════════════════════════════════════════════ */
+function bcGetToken() {
+  return localStorage.getItem('gstake_admin_token')
+      || localStorage.getItem('gstake_token')
+      || null;
+}
+
+function bcRequireAuth() {
+  if (!bcGetToken()) {
+    window.location.href = 'admin-login.html';
+    return false;
+  }
+  return true;
+}
+
+/* ══════════════════════════════════════════════
+   FETCH WRAPPER
+══════════════════════════════════════════════ */
+async function bcFetch(url, options = {}) {
+  const token = bcGetToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
+
+  const res = await fetch(url, { ...options, headers });
+
+  if (res.status === 401) {
+    localStorage.removeItem('gstake_admin_token');
+    localStorage.removeItem('gstake_admin');
+    window.location.href = 'admin-login.html';
+    throw new Error('Session expired. Please sign in again.');
+  }
+
+  const text = await res.text();
+  let data = {};
+  if (text) {
+    try { data = JSON.parse(text); } catch { data = {}; }
+  }
+
+  if (!res.ok) {
+    const message = data.message || data.error || `Request failed (${res.status})`;
+    throw new Error(message);
+  }
+
+  return data.data !== undefined ? data.data : data;
+}
+
+/* ══════════════════════════════════════════════
+   SIDEBAR INJECTION
+══════════════════════════════════════════════ */
+function injectShell() {
+  const admin    = JSON.parse(localStorage.getItem('gstake_admin') || '{}');
+  const initials = (admin.fullName || 'Admin').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+
+  document.getElementById('topNav').innerHTML = `
+    <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar">
+      <svg data-lucide="menu"></svg>
+    </button>
+    <a href="index.html" class="logo">G<em>S</em>TAKE</a>
+    <span class="admin-badge">Admin Panel</span>
+    <div class="nav-spacer"></div>
+    <div class="nav-admin-info">
+      <span class="nav-avatar">${initials}</span>
+      <div style="display:flex;flex-direction:column;line-height:1.2">
+        <strong>${admin.fullName || 'Administrator'}</strong>
+        <span style="font-size:.7rem">${admin.email || ''}</span>
+      </div>
+    </div>
+    <div class="icon-btn" onclick="bcToggleTheme()" title="Toggle theme">
+      <svg data-lucide="moon" id="themeIco"></svg>
+    </div>
+  `;
+
+  const links = [
+    { href: 'index.html',                icon: 'layout-dashboard', label: 'Dashboard',           section: 'Overview'    },
+    { href: 'admin-users.html',          icon: 'users',            label: 'Users',               section: 'Management'  },
+    { href: 'admin-games.html',          icon: 'calendar',         label: 'Games & Odds',         section: 'Management'  },
+    { href: 'admin-settlement.html',     icon: 'flag',             label: 'Settlement & Results', section: 'Management'  },
+    { href: 'admin-transactions.html',   icon: 'arrow-left-right', label: 'Transactions',         section: 'Management'  },
+    { href: 'admin-bets.html',           icon: 'ticket',           label: 'Bet Slips',            section: 'Management'  },
+    { href: 'admin-booking-codes.html',  icon: 'qr-code',          label: 'Booking Codes',        section: 'Management'  },
+  ];
+
+  let html = '';
+  let lastSection = '';
+  links.forEach(link => {
+    if (link.section !== lastSection) {
+      html += `<div class="sidebar-section-label">${link.section}</div>`;
+      lastSection = link.section;
+    }
+    const active = link.href === 'admin-booking-codes.html' ? 'active' : '';
+    html += `
+      <a href="${link.href}" class="sidebar-link ${active}">
+        <svg data-lucide="${link.icon}"></svg>
+        <span>${link.label}</span>
+      </a>`;
+  });
+
+  html += `
+    <div class="sidebar-bottom">
+      <button class="sidebar-logout" onclick="bcLogout()">
+        <svg data-lucide="log-out"></svg>
+        <span>Sign Out</span>
+      </button>
+    </div>`;
+
+  document.getElementById('sidebar').innerHTML = html;
+
+  document.getElementById('sidebarOverlay').addEventListener('click', bcCloseSidebar);
+  document.getElementById('sidebarToggle').addEventListener('click', bcToggleSidebar);
+  lucide.createIcons();
+}
+
+function bcToggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function bcCloseSidebar() {
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+function bcToggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+  const ico = document.getElementById('themeIco');
+  if (ico) { ico.setAttribute('data-lucide', dark ? 'sun' : 'moon'); lucide.createIcons(); }
+}
+function bcLogout() {
+  localStorage.removeItem('gstake_admin_token');
+  localStorage.removeItem('gstake_admin');
+  window.location.href = 'admin-login.html';
+}
+
+/* ══════════════════════════════════════════════
    INIT
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 window.addEventListener('load', () => {
-  requireAuth();
-  injectAdminShell('admin-booking-codes.html');
+  bcRequireAuth();
+  injectShell();
   loadAll();
 });
 
@@ -579,13 +679,14 @@ async function loadAll() {
   await Promise.all([loadCodes(), loadGames()]);
 }
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    LOAD DATA
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 async function loadCodes() {
   try {
-    const data = await apiFetch(BC_API);
-    ALL_CODES = Array.isArray(data) ? data : (data.content || []);
+    const data = await bcFetch(BC_API);
+    // handles plain array, Page<> with content field, or wrapped data
+    ALL_CODES = Array.isArray(data) ? data : (data.content || data || []);
     updateStats();
     renderCodes();
   } catch (err) {
@@ -595,7 +696,7 @@ async function loadCodes() {
 
 async function loadGames() {
   try {
-    const data = await apiFetch(GAME_API);
+    const data = await bcFetch(GAME_API);
     ALL_GAMES = (Array.isArray(data) ? data : (data.content || []))
       .filter(g => g.status === 'UPCOMING');
   } catch (err) {
@@ -603,21 +704,20 @@ async function loadGames() {
   }
 }
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    STATS
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 function updateStats() {
-  document.getElementById('statTotal').textContent = ALL_CODES.length;
-  document.getElementById('statActive').textContent = ALL_CODES.filter(c => c.status === 'ACTIVE').length;
+  document.getElementById('statTotal').textContent   = ALL_CODES.length;
+  document.getElementById('statActive').textContent  = ALL_CODES.filter(c => c.status === 'ACTIVE').length;
   document.getElementById('statExpired').textContent = ALL_CODES.filter(c => c.status !== 'ACTIVE').length;
-  // total bets placed — sum up betCount if available
   const totalBets = ALL_CODES.reduce((sum, c) => sum + (c.betCount || 0), 0);
   document.getElementById('statBets').textContent = totalBets;
 }
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    RENDER CODES GRID
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 function setFilter(f, btn) {
   codeFilter = f;
   PAGE = 1;
@@ -630,14 +730,13 @@ function renderCodes() {
   const q = (document.getElementById('codeSearch').value || '').toUpperCase();
   const filtered = ALL_CODES.filter(c => {
     if (codeFilter !== 'ALL' && c.status !== codeFilter) return false;
-    if (q && !c.code.includes(q)) return false;
+    if (q && !(c.code || '').includes(q)) return false;
     return true;
   });
 
   const totalPages = Math.ceil(filtered.length / PER_PAGE) || 1;
-  const slice = filtered.slice((PAGE - 1) * PER_PAGE, PAGE * PER_PAGE);
-
-  const grid = document.getElementById('codesGrid');
+  const slice      = filtered.slice((PAGE - 1) * PER_PAGE, PAGE * PER_PAGE);
+  const grid       = document.getElementById('codesGrid');
 
   if (!slice.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
@@ -657,25 +756,22 @@ function renderCodes() {
         </div>
         <span class="badge badge-${statusBadge(c.status)}">${c.status}</span>
       </div>
-
       <div class="code-card-meta">
         <span><svg data-lucide="layers"></svg>${c.gameCount || (c.games || []).length} games</span>
         <span><svg data-lucide="trending-up"></svg>${Number(c.combinedOdds || 0).toFixed(2)}x odds</span>
         ${c.expiresAt ? `<span><svg data-lucide="clock"></svg>Expires ${fmtDate(c.expiresAt)}</span>` : ''}
-        ${c.betCount ? `<span><svg data-lucide="users"></svg>${c.betCount} bets</span>` : ''}
+        ${c.betCount  ? `<span><svg data-lucide="users"></svg>${c.betCount} bets</span>` : ''}
       </div>
-
       <div class="code-card-games">
         ${(c.games || []).slice(0, 3).map(g => `
           <div class="code-mini-game">
-            <span class="pick ${pickClass(g.pick)}">${g.pickLabel || g.pick}</span>
+            <span class="pick ${pickClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>
             <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.homeTeam} vs ${g.awayTeam}</span>
             <span style="font-family:var(--ffC);font-weight:700;color:var(--accent)">${Number(g.odds).toFixed(2)}x</span>
           </div>
         `).join('')}
         ${(c.games || []).length > 3 ? `<div style="font-size:.75rem;color:var(--t3);padding:.2rem .5rem">+${c.games.length - 3} more games…</div>` : ''}
       </div>
-
       <div class="code-actions">
         <button class="btn btn-secondary btn-sm" onclick='openDetailModal(${JSON.stringify(c)})'>
           <svg data-lucide="eye"></svg> View
@@ -686,8 +782,7 @@ function renderCodes() {
           </button>
           <button class="btn btn-danger btn-sm" onclick="disableCode('${c.id}')">
             <svg data-lucide="ban"></svg> Disable
-          </button>
-        ` : ''}
+          </button>` : ''}
       </div>
     </div>
   `).join('');
@@ -698,19 +793,19 @@ function renderCodes() {
     pages += `<button class="page-btn${i === PAGE ? ' active' : ''}" onclick="goPage(${i})">${i}</button>`;
   }
   document.getElementById('codesPagination').innerHTML =
-    `<button class="page-btn" onclick="goPage(${PAGE-1})" ${PAGE<=1?'disabled':''}>←</button>
+    `<button class="page-btn" onclick="goPage(${PAGE - 1})" ${PAGE <= 1 ? 'disabled' : ''}>←</button>
      ${pages}
      <span class="page-info">${filtered.length} codes</span>
-     <button class="page-btn" onclick="goPage(${PAGE+1})" ${PAGE>=totalPages?'disabled':''}>→</button>`;
+     <button class="page-btn" onclick="goPage(${PAGE + 1})" ${PAGE >= totalPages ? 'disabled' : ''}>→</button>`;
 
   lucide.createIcons();
 }
 
 function goPage(p) {
-  const q = document.getElementById('codeSearch').value;
+  const q        = document.getElementById('codeSearch').value;
   const filtered = ALL_CODES.filter(c => {
     if (codeFilter !== 'ALL' && c.status !== codeFilter) return false;
-    if (q && !c.code.toUpperCase().includes(q.toUpperCase())) return false;
+    if (q && !(c.code || '').toUpperCase().includes(q.toUpperCase())) return false;
     return true;
   });
   const total = Math.ceil(filtered.length / PER_PAGE) || 1;
@@ -723,17 +818,17 @@ function copyCode(code) {
   navigator.clipboard.writeText(code).then(() => showPageSuccess('Code copied: ' + code));
 }
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    CREATE MODAL
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 function openCreateModal() {
   selectedGameIds = new Set();
-  pickConfig = {};
-  document.getElementById('gameSearch').value = '';
-  document.getElementById('expiresAt').value = '';
-  document.getElementById('includesScorePrediction').checked = false;
-  document.getElementById('picksSection').style.display = 'none';
-  document.getElementById('optionsSection').style.display = 'none';
+  pickConfig      = {};
+  document.getElementById('gameSearch').value                       = '';
+  document.getElementById('expiresAt').value                        = '';
+  document.getElementById('includesScorePrediction').checked        = false;
+  document.getElementById('picksSection').style.display             = 'none';
+  document.getElementById('optionsSection').style.display           = 'none';
   document.getElementById('createError').classList.remove('show');
   renderGameSelector();
   document.getElementById('createModal').classList.add('show');
@@ -745,12 +840,12 @@ function closeCreateModal() {
 }
 
 function renderGameSelector() {
-  const q = document.getElementById('gameSearch').value.toLowerCase();
+  const q        = document.getElementById('gameSearch').value.toLowerCase();
   const filtered = ALL_GAMES.filter(g =>
     g.homeTeam.toLowerCase().includes(q) || g.awayTeam.toLowerCase().includes(q)
   );
-
   const container = document.getElementById('gamesList');
+
   if (!ALL_GAMES.length) {
     container.innerHTML = `<div style="font-size:.82rem;color:var(--t2);padding:.5rem">No upcoming games available.</div>`;
     return;
@@ -763,17 +858,15 @@ function renderGameSelector() {
   container.innerHTML = filtered.map(g => {
     const sel = selectedGameIds.has(g.id);
     return `<div class="game-selector-item ${sel ? 'selected' : ''}" onclick="toggleGame('${g.id}')">
-      <div class="game-selector-check">
-        <svg data-lucide="check"></svg>
-      </div>
+      <div class="game-selector-check"><svg data-lucide="check"></svg></div>
       <div style="flex:1;min-width:0">
         <div style="font-size:.84rem;font-weight:600">${g.homeTeam} vs ${g.awayTeam}</div>
         <div style="font-size:.72rem;color:var(--t3)">${fmtDate(g.matchDate)}</div>
       </div>
       <div style="font-size:.72rem;color:var(--t2);text-align:right;flex-shrink:0">
-        <div>1: ${g.oddsHomeWin?.toFixed(2)||'—'}</div>
-        <div>X: ${g.oddsDraw?.toFixed(2)||'—'}</div>
-        <div>2: ${g.oddsAwayWin?.toFixed(2)||'—'}</div>
+        <div>1: ${g.oddsHomeWin?.toFixed(2) || '—'}</div>
+        <div>X: ${g.oddsDraw?.toFixed(2)    || '—'}</div>
+        <div>2: ${g.oddsAwayWin?.toFixed(2) || '—'}</div>
       </div>
     </div>`;
   }).join('');
@@ -790,8 +883,7 @@ function toggleGame(gameId) {
       return;
     }
     selectedGameIds.add(gameId);
-    // default pick = HOME_WIN, odds = home win odds
-    const g = ALL_GAMES.find(x => x.id === gameId);
+    const g = ALL_GAMES.find(x => String(x.id) === String(gameId));
     pickConfig[gameId] = { pick: 'HOME_WIN', odds: g?.oddsHomeWin || 1.5 };
   }
   renderGameSelector();
@@ -800,30 +892,30 @@ function toggleGame(gameId) {
 }
 
 function updatePicksVisibility() {
-  const hasSel = selectedGameIds.size > 0;
-  document.getElementById('picksSection').style.display = hasSel ? 'block' : 'none';
-  document.getElementById('optionsSection').style.display = hasSel ? 'block' : 'none';
+  const has = selectedGameIds.size > 0;
+  document.getElementById('picksSection').style.display   = has ? 'block' : 'none';
+  document.getElementById('optionsSection').style.display = has ? 'block' : 'none';
   updateCombinedOdds();
 }
 
 function renderPicksList() {
   const container = document.getElementById('picksList');
-  const games = ALL_GAMES.filter(g => selectedGameIds.has(g.id));
+  const games     = ALL_GAMES.filter(g => selectedGameIds.has(String(g.id)));
 
-  container.innerHTML = games.map((g, idx) => {
+  container.innerHTML = games.map(g => {
     const cfg = pickConfig[g.id] || { pick: 'HOME_WIN', odds: g.oddsHomeWin || 1.5 };
     return `<div class="pick-row">
       <div>
-        <div class="pick-row-match" style="font-size:.8rem;font-weight:600">${g.homeTeam} vs ${g.awayTeam}</div>
+        <div class="pick-row-match">${g.homeTeam} vs ${g.awayTeam}</div>
         <div style="font-size:.7rem;color:var(--t3)">${fmtDate(g.matchDate)}</div>
       </div>
       <div class="pick-seg">
-        <button onclick="setPick('${g.id}','HOME_WIN',${g.oddsHomeWin||1.5},this)"
-          class="${cfg.pick==='HOME_WIN'?'active-1':''}">1</button>
-        <button onclick="setPick('${g.id}','DRAW',${g.oddsDraw||3.0},this)"
-          class="${cfg.pick==='DRAW'?'active-x':''}">X</button>
-        <button onclick="setPick('${g.id}','AWAY_WIN',${g.oddsAwayWin||1.5},this)"
-          class="${cfg.pick==='AWAY_WIN'?'active-2':''}">2</button>
+        <button onclick="setPick('${g.id}','HOME_WIN',${g.oddsHomeWin || 1.5},this)"
+          class="${cfg.pick === 'HOME_WIN' ? 'active-1' : ''}">1</button>
+        <button onclick="setPick('${g.id}','DRAW',${g.oddsDraw || 3.0},this)"
+          class="${cfg.pick === 'DRAW' ? 'active-x' : ''}">X</button>
+        <button onclick="setPick('${g.id}','AWAY_WIN',${g.oddsAwayWin || 1.5},this)"
+          class="${cfg.pick === 'AWAY_WIN' ? 'active-2' : ''}">2</button>
       </div>
       <input type="number" class="odds-input" id="odds_${g.id}"
         value="${Number(cfg.odds).toFixed(2)}" min="1" step="0.01"
@@ -833,16 +925,16 @@ function renderPicksList() {
 }
 
 function setPick(gameId, pick, defaultOdds, btn) {
-  pickConfig[gameId] = pickConfig[gameId] || {};
-  pickConfig[gameId].pick = pick;
-  // update odds input to the game's default for that market
-  const oddsEl = document.getElementById('odds_' + gameId);
-  if (oddsEl && defaultOdds) { oddsEl.value = Number(defaultOdds).toFixed(2); pickConfig[gameId].odds = defaultOdds; }
-  // update button styles
+  pickConfig[gameId]       = pickConfig[gameId] || {};
+  pickConfig[gameId].pick  = pick;
+  const oddsEl             = document.getElementById('odds_' + gameId);
+  if (oddsEl && defaultOdds) {
+    oddsEl.value              = Number(defaultOdds).toFixed(2);
+    pickConfig[gameId].odds   = defaultOdds;
+  }
   const seg = btn.closest('.pick-seg');
   seg.querySelectorAll('button').forEach(b => b.className = '');
-  const cls = pick === 'HOME_WIN' ? 'active-1' : pick === 'DRAW' ? 'active-x' : 'active-2';
-  btn.className = cls;
+  btn.className = pick === 'HOME_WIN' ? 'active-1' : pick === 'DRAW' ? 'active-x' : 'active-2';
   updateCombinedOdds();
 }
 
@@ -855,11 +947,10 @@ function updateOdds(gameId, val) {
 function updateCombinedOdds() {
   let combined = 1;
   selectedGameIds.forEach(id => {
-    const odds = parseFloat(pickConfig[id]?.odds || 1);
-    combined *= odds;
+    combined *= parseFloat(pickConfig[id]?.odds || 1);
   });
   document.getElementById('combinedOddsDisplay').textContent = combined.toFixed(2) + 'x';
-  document.getElementById('gameCountDisplay').textContent = selectedGameIds.size;
+  document.getElementById('gameCountDisplay').textContent    = selectedGameIds.size;
 }
 
 async function submitCreate() {
@@ -867,19 +958,18 @@ async function submitCreate() {
 
   if (selectedGameIds.size < 1) { showCreateError('Select at least 1 game.'); return; }
 
-  // Validate all picks have odds > 1
   for (const id of selectedGameIds) {
     const cfg = pickConfig[id];
-    if (!cfg || !cfg.pick) { showCreateError('Please set a pick for all games.'); return; }
-    if (!cfg.odds || cfg.odds < 1) { showCreateError('All odds must be at least 1.00.'); return; }
+    if (!cfg || !cfg.pick)          { showCreateError('Please set a pick for all games.'); return; }
+    if (!cfg.odds || cfg.odds < 1)  { showCreateError('All odds must be at least 1.00.'); return; }
   }
 
   const games = Array.from(selectedGameIds).map((id, idx) => {
     const cfg = pickConfig[id];
     return {
-      gameId: id,
-      pick: cfg.pick,
-      odds: parseFloat(cfg.odds),
+      gameId:   id,           // UUID string — matches backend UUID type
+      pick:     cfg.pick,
+      odds:     parseFloat(cfg.odds),
       position: idx + 1,
     };
   });
@@ -890,16 +980,16 @@ async function submitCreate() {
   };
 
   const expiresAt = document.getElementById('expiresAt').value;
-  if (expiresAt) payload.expiresAt = expiresAt.replace('T', 'T') + ':00';
+  if (expiresAt) payload.expiresAt = expiresAt + ':00';   // "YYYY-MM-DDTHH:mm:ss"
 
   const btn = document.getElementById('createBtn');
   btn.classList.add('loading');
   btn.textContent = 'Generating…';
 
   try {
-    const result = await apiFetch(BC_API, {
+    const result = await bcFetch(BC_API, {
       method: 'POST',
-      body: JSON.stringify(payload),
+      body:   JSON.stringify(payload),
     });
     closeCreateModal();
     showPageSuccess(`Booking code created: ${result.code || 'OK'}`);
@@ -913,23 +1003,21 @@ async function submitCreate() {
   }
 }
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    DETAIL MODAL
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 function openDetailModal(code) {
   currentDetailCode = code;
   document.getElementById('dmTitle').textContent = 'Booking Code Details';
-  document.getElementById('dmCode').innerHTML = `<span class="code-display">${code.code}</span>`;
-
-  const statusCls = statusBadge(code.status);
+  document.getElementById('dmCode').innerHTML    = `<span class="code-display">${code.code}</span>`;
 
   let body = `
     <div class="settle-info-row"><span style="color:var(--t2)">Status</span>
-      <span class="badge badge-${statusCls}">${code.status}</span></div>
+      <span class="badge badge-${statusBadge(code.status)}">${code.status}</span></div>
     <div class="settle-info-row"><span style="color:var(--t2)">Combined Odds</span>
       <span style="font-family:var(--ffC);font-weight:800;color:var(--accent)">${Number(code.combinedOdds).toFixed(2)}x</span></div>
     <div class="settle-info-row"><span style="color:var(--t2)">Games</span>
-      <span>${(code.games||[]).length}</span></div>
+      <span>${(code.games || []).length}</span></div>
     ${code.expiresAt ? `<div class="settle-info-row"><span style="color:var(--t2)">Expires At</span><span>${fmtDate(code.expiresAt)}</span></div>` : ''}
     ${code.betCount !== undefined ? `<div class="settle-info-row"><span style="color:var(--t2)">Bets Placed</span><span>${code.betCount}</span></div>` : ''}
     <div style="margin-top:1rem;margin-bottom:.5rem;font-family:var(--ffC);font-size:.85rem;font-weight:700;color:var(--t2);letter-spacing:.8px;text-transform:uppercase">Selections</div>
@@ -937,7 +1025,7 @@ function openDetailModal(code) {
 
   body += (code.games || []).map((g, i) => `
     <div class="game-row">
-      <div class="game-pos">${g.position || i+1}</div>
+      <div class="game-pos">${g.position || i + 1}</div>
       <div class="game-info">
         <div class="game-match">${g.homeTeam} vs ${g.awayTeam}</div>
         <div class="game-date">${fmtDate(g.matchDate)}</div>
@@ -949,11 +1037,10 @@ function openDetailModal(code) {
 
   document.getElementById('dmBody').innerHTML = body;
 
-  // Footer
   let footer = `<button class="btn btn-secondary" onclick="closeDetailModal()">Close</button>`;
   if (code.status === 'ACTIVE') {
     footer += `
-      <button class="btn btn-success" onclick="closeDetailModal();openSettleModal(currentDetailCode||${JSON.stringify(code)})">
+      <button class="btn btn-success" onclick="closeDetailModal();openSettleModal(currentDetailCode)">
         <svg data-lucide="flag"></svg> Settle
       </button>
       <button class="btn btn-danger" onclick="closeDetailModal();disableCode('${code.id}')">
@@ -961,7 +1048,6 @@ function openDetailModal(code) {
       </button>`;
   }
   document.getElementById('dmFooter').innerHTML = footer;
-
   document.getElementById('detailModal').classList.add('show');
   lucide.createIcons();
 }
@@ -971,23 +1057,21 @@ function closeDetailModal() {
   currentDetailCode = null;
 }
 
-/* ══════════════════════════════════════════════════════
-   SETTLE — open settle flow (game score entry per game)
-══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   SETTLE MODAL
+══════════════════════════════════════════════ */
 function openSettleModal(code) {
   currentDetailCode = code;
-  // For settlement: show game list with "Enter Score" buttons per game
-  // Then trigger settlement API
   document.getElementById('dmTitle').textContent = 'Settle Booking Code';
-  document.getElementById('dmCode').innerHTML = `<span class="code-display">${code.code}</span>`;
+  document.getElementById('dmCode').innerHTML    = `<span class="code-display">${code.code}</span>`;
 
   let body = `<p style="font-size:.84rem;color:var(--t2);margin-bottom:1rem">
-    Enter the final score for each game. Once all scores are recorded, click <strong>Run Settlement</strong> to settle all pending bets.
+    Enter the final score for each game then click <strong>Run Settlement</strong>.
   </p>`;
 
   body += (code.games || []).map((g, i) => `
     <div class="game-row" style="margin-bottom:.5rem">
-      <div class="game-pos">${i+1}</div>
+      <div class="game-pos">${i + 1}</div>
       <div class="game-info">
         <div class="game-match">${g.homeTeam} vs ${g.awayTeam}</div>
         <div class="game-date">${fmtDate(g.matchDate)}</div>
@@ -1000,7 +1084,6 @@ function openSettleModal(code) {
   `).join('');
 
   document.getElementById('dmBody').innerHTML = body;
-
   document.getElementById('dmFooter').innerHTML = `
     <button class="btn btn-secondary" onclick="closeDetailModal()">Cancel</button>
     <button class="btn btn-primary" onclick="runSettlement('${code.id}')">
@@ -1012,17 +1095,17 @@ function openSettleModal(code) {
   lucide.createIcons();
 }
 
-/* ══════════════════════════════════════════════════════
-   SCORE ENTRY MODAL
-══════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   SCORE MODAL
+══════════════════════════════════════════════ */
 function openScoreModal(gameId, homeTeam, awayTeam, bookingCodeId) {
-  currentScoreGameId = gameId;
-  currentScoreBookingCodeId = bookingCodeId;
-  document.getElementById('scoreGameName').textContent = homeTeam + ' vs ' + awayTeam;
+  currentScoreGameId    = gameId;
+  currentScoreBookingId = bookingCodeId;
+  document.getElementById('scoreGameName').textContent  = homeTeam + ' vs ' + awayTeam;
   document.getElementById('scoreHomeLabel').textContent = homeTeam;
   document.getElementById('scoreAwayLabel').textContent = awayTeam;
-  document.getElementById('homeScoreInput').value = '';
-  document.getElementById('awayScoreInput').value = '';
+  document.getElementById('homeScoreInput').value       = '';
+  document.getElementById('awayScoreInput').value       = '';
   document.getElementById('scoreError').classList.remove('show');
   document.getElementById('scoreModal').classList.add('show');
   lucide.createIcons();
@@ -1030,12 +1113,14 @@ function openScoreModal(gameId, homeTeam, awayTeam, bookingCodeId) {
 
 function closeScoreModal() {
   document.getElementById('scoreModal').classList.remove('show');
-  currentScoreGameId = null;
+  currentScoreGameId    = null;
+  currentScoreBookingId = null;
 }
 
 async function submitScore() {
   const home = parseInt(document.getElementById('homeScoreInput').value);
   const away = parseInt(document.getElementById('awayScoreInput').value);
+
   if (isNaN(home) || isNaN(away) || home < 0 || away < 0) {
     document.getElementById('scoreErrorMsg').textContent = 'Please enter valid scores (0 or more).';
     document.getElementById('scoreError').classList.add('show');
@@ -1047,10 +1132,9 @@ async function submitScore() {
   btn.classList.add('loading');
 
   try {
-    // POST to game result endpoint
-    await apiFetch(`https://kikiwebbackend.onrender.com/api/v1/admin/games/${currentScoreGameId}/result`, {
+    await bcFetch(`${RESULT_API}/${currentScoreGameId}/result`, {
       method: 'POST',
-      body: JSON.stringify({ homeScore: home, awayScore: away }),
+      body:   JSON.stringify({ homeScore: home, awayScore: away }),
     });
     closeScoreModal();
     showPageSuccess(`Score saved: ${home} – ${away}`);
@@ -1063,31 +1147,31 @@ async function submitScore() {
   }
 }
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    SETTLEMENT
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 async function runSettlement(bookingCodeId) {
   const btn = document.querySelector('#dmFooter .btn-primary');
   if (btn) { btn.classList.add('loading'); btn.textContent = 'Settling…'; }
 
   try {
-    await apiFetch(`${SETTLE_API}/${bookingCodeId}`, { method: 'POST' });
+    await bcFetch(`${SETTLE_API}/${bookingCodeId}`, { method: 'POST' });
     closeDetailModal();
     showPageSuccess('Settlement complete! Bets have been settled.');
     await loadCodes();
   } catch (err) {
-    showPageError('Settlement failed: ' + err.message);
     closeDetailModal();
+    showPageError('Settlement failed: ' + err.message);
   }
 }
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    DISABLE CODE
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 async function disableCode(codeId) {
   if (!confirm('Disable this booking code? Users will no longer be able to bet on it.')) return;
   try {
-    await apiFetch(`${BC_API}/${codeId}/disable`, { method: 'PATCH' });
+    await bcFetch(`${BC_API}/${codeId}/disable`, { method: 'PATCH' });
     showPageSuccess('Booking code disabled.');
     await loadCodes();
   } catch (err) {
@@ -1095,12 +1179,12 @@ async function disableCode(codeId) {
   }
 }
 
-/* ══════════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    HELPERS
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 function statusBadge(status) {
-  if (status === 'ACTIVE') return 'success';
-  if (status === 'EXPIRED') return 'finished';
+  if (status === 'ACTIVE')   return 'success';
+  if (status === 'EXPIRED')  return 'finished';
   if (status === 'DISABLED') return 'failed';
   return 'pending';
 }
@@ -1130,7 +1214,10 @@ function pickLabel(pick) {
 function fmtDate(dt) {
   if (!dt) return '—';
   try {
-    return new Date(dt).toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    return new Date(dt).toLocaleString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
   } catch { return dt; }
 }
 
