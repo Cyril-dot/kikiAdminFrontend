@@ -161,7 +161,6 @@
       <div class="confirm-title">Delete Game?</div>
       <div class="confirm-sub" id="deleteConfirmMsg">This game will be permanently deleted.</div>
     </div>
-    <!-- ★ stores the ID of the game to delete -->
     <input type="hidden" id="deleteGameId">
     <div class="alert alert-error" id="deleteErrorAlert" style="margin:.75rem 0">
       <svg data-lucide="alert-circle"></svg>
@@ -543,7 +542,6 @@ async function setGameStatus(newStatus) {
 
 /* ─────────────────────────────────────────────────
    DELETE SINGLE GAME
-   openDeleteModal  → stores id → confirmDelete calls apiDeleteGame
 ───────────────────────────────────────────────── */
 function openDeleteModal(id) {
   const g = GAMES.find(x => x.id === id);
@@ -551,7 +549,6 @@ function openDeleteModal(id) {
     showAlert('error', 'Game not found — try refreshing.');
     return;
   }
-  // Store the ID in the hidden input
   document.getElementById('deleteGameId').value = id;
   document.getElementById('deleteConfirmMsg').textContent =
     `"${g.homeTeam} vs ${g.awayTeam}" will be permanently deleted along with all its bet selections.`;
@@ -561,15 +558,11 @@ function openDeleteModal(id) {
 }
 
 async function confirmDelete() {
-  // Read the stored game ID
   const gameId = document.getElementById('deleteGameId').value;
-
   if (!gameId) {
     showAlert('error', 'No game selected for deletion.');
     return;
   }
-
-  console.log('[confirmDelete] deleting gameId:', gameId);
 
   const btn       = document.getElementById('deleteConfirmBtn');
   const cancelBtn = document.getElementById('deleteCancelBtn');
@@ -579,16 +572,14 @@ async function confirmDelete() {
   document.getElementById('deleteErrorAlert').classList.remove('show');
 
   try {
-    await apiDeleteGame(gameId);                          // ← calls DELETE /admin/games/{id}
-    GAMES = GAMES.filter(g => g.id !== gameId);          // remove from local list
+    await apiDeleteGame(gameId);
+    GAMES = GAMES.filter(g => g.id !== gameId);
     closeModal('deleteModal');
     showAlert('success', 'Game deleted successfully.');
     renderGamesTable();
   } catch (err) {
-    // Show error inside the modal so user can see it
     document.getElementById('deleteErrorMsg').textContent = err.message;
     document.getElementById('deleteErrorAlert').classList.add('show');
-    console.error('[confirmDelete] error:', err);
   } finally {
     btn.classList.remove('loading');
     btn.disabled       = false;
@@ -599,29 +590,22 @@ async function confirmDelete() {
 
 /* ─────────────────────────────────────────────────
    DELETE ALL GAMES
-   Uses apiDeleteAllGames() from admin-api.js which
-   loops sequentially and reports progress.
 ───────────────────────────────────────────────── */
 function openDeleteAllModal() {
-  // Refresh the game count shown in the modal
   document.getElementById('deleteAllCount').textContent = GAMES.length;
-
   const progress = document.getElementById('deleteAllProgress');
   progress.style.display = 'none';
   progress.textContent   = '';
-
   const btn = document.getElementById('deleteAllConfirmBtn');
   btn.disabled = false;
   btn.classList.remove('loading');
   document.getElementById('deleteAllCancelBtn').disabled = false;
-
   openModal('deleteAllModal');
   lucide.createIcons();
 }
 
 async function confirmDeleteAll() {
   const allGames = [...GAMES];
-
   if (!allGames.length) {
     showAlert('error', 'No games to delete.');
     closeModal('deleteAllModal');
@@ -638,31 +622,23 @@ async function confirmDeleteAll() {
   progress.style.display = 'block';
   progress.textContent   = 'Starting…';
 
-  // Progress callback — updates the label in real time
   const onProgress = (current, total, game) => {
     progress.textContent = `Deleting ${current} of ${total}: ${game.homeTeam} vs ${game.awayTeam}…`;
   };
 
   try {
     const { deleted, failed, errors } = await apiDeleteAllGames(allGames, onProgress);
-
-    // Remove successfully deleted games from local state
     const deletedIds = new Set(
       allGames
         .filter((_, i) => !errors.find(e => e.game.id === allGames[i]?.id))
         .map(g => g.id)
     );
     GAMES = GAMES.filter(g => !deletedIds.has(g.id));
-
-    // Reload from server to be safe
     try { GAMES = await apiGetAllGames(); } catch { /* use local state */ }
-
     closeModal('deleteAllModal');
     renderGamesTable();
-
     if (failed > 0) {
-      showAlert('error',
-        `Done — ${deleted} deleted, ${failed} failed. Check console for details.`);
+      showAlert('error', `Done — ${deleted} deleted, ${failed} failed. Check console for details.`);
       errors.forEach(e => console.warn('[deleteAll] failed:', e.game.id, e.message));
     } else {
       showAlert('success', `${deleted} game${deleted !== 1 ? 's' : ''} deleted successfully.`);
@@ -757,6 +733,100 @@ async function revealCSMarket() {
 }
 
 /* ─────────────────────────────────────────────────
+   FIX: Correct Score options loader for booking-code form
+   Calls GET /api/admin/correct-score/{gameId}/options
+   instead of the POST /generate endpoint.
+   Returns [] (empty array) if no options exist yet —
+   the admin must hit "Generate Score Options" in the
+   CS Market modal first before building a booking code.
+───────────────────────────────────────────────── */
+
+/**
+ * Fetch existing CS options for a game — read-only, no side effects.
+ * Used exclusively by the booking-code form dropdowns.
+ */
+async function fetchCSOptionsForGame(gameId) {
+  // apiGetCSOptions must be defined in admin-api.js:
+  //   GET /api/admin/correct-score/{gameId}/options
+  const options = await apiGetCSOptions(gameId);
+  return Array.isArray(options) ? options : [];
+}
+
+/**
+ * Builds the score-option <select> for one game row in the booking-code form.
+ * Fetches options via GET (safe), then populates the dropdown.
+ * Shows a friendly message if no options have been generated yet.
+ *
+ * @param {string} gameId   - UUID of the game
+ * @param {string} selectId - id of the <select> element to populate
+ * @param {Function} onReady - callback fired when the dropdown is ready (or failed)
+ */
+async function loadCSOptionsIntoSelect(gameId, selectId, onReady) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+
+  // Show loading state
+  sel.innerHTML = '<option value="">Loading options…</option>';
+  sel.disabled  = true;
+
+  try {
+    const options = await fetchCSOptionsForGame(gameId);
+
+    if (!options.length) {
+      // No options yet — admin must generate them first in the CS Market modal
+      sel.innerHTML = '<option value="">No options — generate them in CS Market first</option>';
+      sel.disabled  = true;
+      if (onReady) onReady(false, 'No options available');
+      return;
+    }
+
+    // Populate dropdown with score options
+    sel.innerHTML = '<option value="">Pick a score…</option>' +
+      options.map(o =>
+        `<option
+          value="${o.id}"
+          data-odds="${o.odds}"
+          data-prediction="${esc(o.scorePrediction)}"
+        >${o.scorePrediction} (${o.odds}x)</option>`
+      ).join('');
+
+    sel.disabled = false;
+    if (onReady) onReady(true);
+
+  } catch (err) {
+    console.error('[loadCSOptionsIntoSelect] failed for game', gameId, err);
+    sel.innerHTML = '<option value="">Failed to load — retry</option>';
+    sel.disabled  = false; // keep enabled so they can retry by switching game
+    if (onReady) onReady(false, err.message);
+  }
+
+  lucide.createIcons();
+}
+
+/**
+ * Validates that every game row in the booking-code form has a score option
+ * selected. Enables / disables the Generate Code button accordingly.
+ * Call this whenever any score dropdown changes.
+ *
+ * @param {string[]} selectIds - array of <select> element ids (one per game)
+ * @param {string}   btnId     - id of the Generate Code button
+ */
+function validateCSBookingForm(selectIds, btnId) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+
+  const allSelected = selectIds.every(id => {
+    const sel = document.getElementById(id);
+    return sel && sel.value && sel.value !== '';
+  });
+
+  btn.disabled = !allSelected;
+  btn.title    = allSelected
+    ? ''
+    : 'Select a score option for every game before generating';
+}
+
+/* ─────────────────────────────────────────────────
    Utilities
 ───────────────────────────────────────────────── */
 function openModal(id)  { document.getElementById(id).classList.add('show');    lucide.createIcons(); }
@@ -770,7 +840,6 @@ function fmtDate(d) {
   });
 }
 
-// Simple XSS-safe escaper for team names / codes rendered into innerHTML
 function esc(str) {
   return String(str ?? '')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
