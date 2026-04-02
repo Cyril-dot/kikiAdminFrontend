@@ -25,14 +25,15 @@ function injectAdminShell(activePage) {
   `;
 
   /* ─── Sidebar ─── */
-  const links = [
-    { href:'index.html',              icon:'layout-dashboard', label:'Dashboard',           section:'Overview'    },
-    { href:'admin-users.html',        icon:'users',            label:'Users',               section:'Management'  },
-    { href:'admin-games.html',        icon:'calendar',         label:'Games & Odds',         section:'Management'  },
-    { href:'admin-settlement.html',   icon:'flag',             label:'Settlement & Results', section:'Management'  },
-    { href:'admin-transactions.html', icon:'arrow-left-right', label:'Transactions',         section:'Management'  },
-    { href:'admin-bets.html',         icon:'ticket',           label:'Bet Slips',            section:'Management'  },
-  ];
+ const links = [
+  { href:'index.html',                 icon:'layout-dashboard', label:'Dashboard',           section:'Overview'   },
+  { href:'admin-users.html',           icon:'users',            label:'Users',               section:'Management' },
+  { href:'admin-games.html',           icon:'calendar',         label:'Games & Odds',         section:'Management' },
+  { href:'admin-settlement.html',      icon:'flag',             label:'Settlement & Results', section:'Management' },
+  { href:'admin-transactions.html',    icon:'arrow-left-right', label:'Transactions',         section:'Management' },
+  { href:'admin-bets.html',            icon:'ticket',           label:'Bet Slips',            section:'Management' },
+  { href:'admin-booking-codes.html',   icon:'qr-code',          label:'Booking Codes',        section:'Management' }, // ← new
+];
 
   let sidebarHTML = '';
   let lastSection = '';
