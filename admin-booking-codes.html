@@ -26,7 +26,6 @@
 }
 .code-display:hover { background: var(--accentBg2); }
 
-/* ── Code Type Selector ── */
 .code-type-selector {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -50,10 +49,10 @@
   opacity: 0;
   transition: opacity .18s;
 }
-.type-option.standard::before  { background: rgba(34,197,94,.06); }
+.type-option.standard::before    { background: rgba(34,197,94,.06); }
 .type-option.correctscore::before { background: rgba(251,191,36,.06); }
 .type-option:hover { border-color: var(--borderHov); }
-.type-option.selected.standard    { border-color: var(--green); background: rgba(34,197,94,.08); }
+.type-option.selected.standard     { border-color: var(--green); background: rgba(34,197,94,.08); }
 .type-option.selected.correctscore { border-color: #f59e0b; background: rgba(245,158,11,.08); }
 .type-option.selected::before { opacity: 1; }
 .type-icon {
@@ -62,12 +61,12 @@
   display: flex; align-items: center; justify-content: center;
   margin-bottom: .6rem;
 }
-.type-icon.std  { background: rgba(34,197,94,.15); color: var(--green); }
-.type-icon.cs   { background: rgba(245,158,11,.15); color: #f59e0b; }
-.type-icon svg  { width: 18px; height: 18px; }
-.type-title  { font-size: .9rem; font-weight: 700; color: var(--t1); margin-bottom: .2rem; }
-.type-desc   { font-size: .72rem; color: var(--t2); line-height: 1.4; }
-.type-check  {
+.type-icon.std { background: rgba(34,197,94,.15); color: var(--green); }
+.type-icon.cs  { background: rgba(245,158,11,.15); color: #f59e0b; }
+.type-icon svg { width: 18px; height: 18px; }
+.type-title { font-size: .9rem; font-weight: 700; color: var(--t1); margin-bottom: .2rem; }
+.type-desc  { font-size: .72rem; color: var(--t2); line-height: 1.4; }
+.type-check {
   position: absolute; top: .6rem; right: .6rem;
   width: 18px; height: 18px;
   border-radius: 50%;
@@ -76,12 +75,11 @@
   display: flex; align-items: center; justify-content: center;
   transition: all .15s;
 }
-.type-option.selected.standard   .type-check { background: var(--green); border-color: var(--green); }
+.type-option.selected.standard    .type-check { background: var(--green); border-color: var(--green); }
 .type-option.selected.correctscore .type-check { background: #f59e0b; border-color: #f59e0b; }
 .type-check svg { width: 10px; height: 10px; color: #000; display: none; }
 .type-option.selected .type-check svg { display: block; }
 
-/* ── Badges ── */
 .cs-badge {
   font-size: .65rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
   padding: 2px 7px; border-radius: 5px;
@@ -106,15 +104,15 @@
   transition: border-color .15s;
 }
 .game-row:hover { border-color: var(--borderHov); }
-.game-pos { font-family: var(--ffC); font-size: .85rem; font-weight: 800; color: var(--t3); text-align: center; }
-.game-info { min-width: 0; }
+.game-pos   { font-family: var(--ffC); font-size: .85rem; font-weight: 800; color: var(--t3); text-align: center; }
+.game-info  { min-width: 0; }
 .game-match { font-size: .84rem; font-weight: 600; color: var(--t1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .game-date  { font-size: .72rem; color: var(--t3); margin-top: 1px; }
 .pick-badge { font-family: var(--ffC); font-size: .95rem; font-weight: 800; letter-spacing: .5px; padding: 3px 10px; border-radius: 6px; white-space: nowrap; }
-.pick-1  { background: rgba(34,197,94,.12); color: var(--green); border: 1px solid rgba(34,197,94,.25); }
+.pick-1  { background: rgba(34,197,94,.12);  color: var(--green);  border: 1px solid rgba(34,197,94,.25); }
 .pick-x  { background: rgba(251,146,60,.12); color: var(--orange); border: 1px solid rgba(251,146,60,.25); }
-.pick-2  { background: rgba(96,165,250,.12); color: var(--blue); border: 1px solid rgba(96,165,250,.25); }
-.pick-cs { background: rgba(245,158,11,.12); color: #f59e0b; border: 1px solid rgba(245,158,11,.25); }
+.pick-2  { background: rgba(96,165,250,.12);  color: var(--blue);   border: 1px solid rgba(96,165,250,.25); }
+.pick-cs { background: rgba(245,158,11,.12);  color: #f59e0b;       border: 1px solid rgba(245,158,11,.25); }
 .game-odds { font-family: var(--ffC); font-size: 1rem; font-weight: 800; color: var(--accent); min-width: 50px; text-align: right; }
 
 .game-selector-item {
@@ -123,7 +121,7 @@
   border: 1px solid var(--border); background: var(--bg3);
   cursor: pointer; transition: all .15s; margin-bottom: .4rem;
 }
-.game-selector-item:hover { border-color: var(--borderAcc); background: var(--accentBg); }
+.game-selector-item:hover    { border-color: var(--borderAcc); background: var(--accentBg); }
 .game-selector-item.selected { border-color: var(--accent); background: var(--accentBg); }
 .game-selector-check {
   width: 20px; height: 20px; border-radius: 6px;
@@ -134,7 +132,6 @@
 .game-selector-check svg { width: 12px; height: 12px; color: #000; display: none; }
 .game-selector-item.selected .game-selector-check svg { display: block; }
 
-/* ── Pick row ── */
 .pick-row {
   padding: .65rem .75rem; border-radius: var(--r);
   background: var(--bg3); border: 1px solid var(--border); margin-bottom: .5rem;
@@ -150,7 +147,7 @@
   font-family: var(--ffC); font-size: .85rem; font-weight: 800; color: var(--t3);
   cursor: pointer; transition: all .15s;
 }
-.pick-seg button.active-1 { background: rgba(34,197,94,.2); color: var(--green); }
+.pick-seg button.active-1 { background: rgba(34,197,94,.2);  color: var(--green); }
 .pick-seg button.active-x { background: rgba(251,146,60,.2); color: var(--orange); }
 .pick-seg button.active-2 { background: rgba(96,165,250,.2); color: var(--blue); }
 .odds-input {
@@ -161,9 +158,11 @@
 }
 .odds-input:focus { border-color: var(--borderAcc); }
 
-/* ── CS Score Selector ── */
 .cs-score-section { margin-top: .5rem; }
-.cs-score-label { font-size: .68rem; color: var(--t3); margin-bottom: .35rem; display: flex; align-items: center; gap: .35rem; }
+.cs-score-label {
+  font-size: .68rem; color: var(--t3); margin-bottom: .35rem;
+  display: flex; align-items: center; gap: .35rem;
+}
 .cs-auto-badge {
   font-size: .6rem; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
   padding: 1px 5px; border-radius: 4px;
@@ -175,7 +174,7 @@
   font-size: .82rem; color: var(--t1); outline: none; cursor: pointer;
   transition: border-color .15s; appearance: none; -webkit-appearance: none;
 }
-.cs-score-select:focus { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.15); }
+.cs-score-select:focus    { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,.15); }
 .cs-score-select:disabled { opacity: .5; cursor: not-allowed; }
 .cs-select-wrap { position: relative; }
 .cs-select-wrap::after {
@@ -190,7 +189,8 @@
 }
 .cs-spinner {
   width: 12px; height: 12px; border: 2px solid var(--border);
-  border-top-color: #f59e0b; border-radius: 50%; animation: spin .6s linear infinite; flex-shrink: 0;
+  border-top-color: #f59e0b; border-radius: 50%;
+  animation: spin .6s linear infinite; flex-shrink: 0;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .cs-selected-preview {
@@ -204,23 +204,23 @@
   padding: 1px 8px; border-radius: 5px;
 }
 .cs-selected-meta { color: var(--t2); }
-.cs-error-row { font-size: .72rem; color: var(--red, #f87171); padding: .3rem 0; display: flex; align-items: center; gap: .35rem; }
+.cs-error-row {
+  font-size: .72rem; color: var(--red, #f87171); padding: .3rem 0;
+  display: flex; align-items: center; gap: .35rem;
+}
 .cs-retry-btn {
   background: none; border: 1px solid rgba(248,113,113,.3); border-radius: 5px;
-  color: var(--red, #f87171); font-size: .68rem; padding: 2px 7px; cursor: pointer;
-  font-family: var(--ff);
+  color: var(--red, #f87171); font-size: .68rem; padding: 2px 7px; cursor: pointer; font-family: var(--ff);
 }
 .cs-retry-btn:hover { background: rgba(248,113,113,.1); }
 
-/* ── Odds Strip ── */
 .odds-strip {
   background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
   padding: .75rem 1rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
 }
 .odds-strip-label { font-size: .75rem; color: var(--t2); }
-.odds-strip-val { font-family: var(--ffC); font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+.odds-strip-val   { font-family: var(--ffC); font-size: 1.5rem; font-weight: 800; color: var(--accent); }
 
-/* ── Code Cards ── */
 .code-card {
   background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rLg);
   padding: 1.25rem; transition: border-color .15s, transform .15s; animation: slideUp .35s both;
@@ -236,12 +236,15 @@
   display: flex; align-items: center; gap: .5rem; font-size: .78rem; color: var(--t2);
   padding: .35rem .5rem; background: var(--bg3); border-radius: 6px;
 }
-.code-mini-game .pick { font-weight: 700; font-family: var(--ffC); font-size: .85rem; }
-.code-mini-game .pick.p1 { color: var(--green); }
-.code-mini-game .pick.px { color: var(--orange); }
-.code-mini-game .pick.p2 { color: var(--blue); }
-.code-mini-game .pick.pcs { color: #f59e0b; }
-.code-actions { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border); }
+.code-mini-game .pick          { font-weight: 700; font-family: var(--ffC); font-size: .85rem; }
+.code-mini-game .pick.p1       { color: var(--green); }
+.code-mini-game .pick.px       { color: var(--orange); }
+.code-mini-game .pick.p2       { color: var(--blue); }
+.code-mini-game .pick.pcs      { color: #f59e0b; }
+.code-actions {
+  display: flex; gap: .4rem; flex-wrap: wrap;
+  margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border);
+}
 
 .settle-info-row {
   display: flex; justify-content: space-between; align-items: center;
@@ -261,7 +264,11 @@
 .score-vs { font-family: var(--ffC); font-size: 1.2rem; font-weight: 700; color: var(--t3); }
 
 .tabs { display: flex; gap: .4rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-.tab-btn { padding: .5rem 1rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--t2); font-size: .83rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+.tab-btn {
+  padding: .5rem 1rem; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--t2); font-size: .83rem; font-weight: 600;
+  cursor: pointer; transition: all .15s;
+}
 .tab-btn.active { background: var(--accentBg); color: var(--accent); border-color: var(--borderAcc); }
 .tab-btn:hover:not(.active) { border-color: var(--borderHov); color: var(--t1); }
 
@@ -276,8 +283,15 @@
 .modal-search::placeholder { color: var(--t3); }
 .modal-search:focus { border-color: var(--borderAcc); }
 
-.pagination { display: flex; align-items: center; gap: .4rem; justify-content: center; margin-top: 1.25rem; flex-wrap: wrap; }
-.page-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg3); color: var(--t2); font-size: .82rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.pagination {
+  display: flex; align-items: center; gap: .4rem;
+  justify-content: center; margin-top: 1.25rem; flex-wrap: wrap;
+}
+.page-btn {
+  width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg3); color: var(--t2); font-size: .82rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s;
+}
 .page-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
 .page-btn:hover:not(.active):not([disabled]) { border-color: var(--borderHov); color: var(--t1); }
 .page-btn[disabled] { opacity: .35; cursor: not-allowed; }
@@ -285,7 +299,7 @@
 
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--t2); }
 .empty-state svg { width: 40px; height: 40px; margin-bottom: 1rem; opacity: .3; }
-.empty-state p { font-size: .9rem; }
+.empty-state p   { font-size: .9rem; }
 
 .codes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
 
@@ -397,7 +411,6 @@
       <button class="modal-close" onclick="closeCreateModal()"><svg data-lucide="x"></svg></button>
     </div>
 
-    <!-- STEP 1: Type -->
     <div class="step-label"><span class="step-num">1</span> Choose Slip Type</div>
     <div class="code-type-selector">
       <div class="type-option standard selected" id="typeStandard" onclick="selectCodeType('standard')">
@@ -414,12 +427,10 @@
       </div>
     </div>
 
-    <!-- STEP 2: Games -->
     <div class="step-label"><span class="step-num">2</span> Select Games (1–10)</div>
     <input type="text" class="modal-search" id="gameSearch" placeholder="Search by team…" oninput="renderGameSelector()">
     <div class="games-list-scroll" id="gamesList"></div>
 
-    <!-- STEP 3: Picks -->
     <div id="picksSection" style="display:none;margin-top:1rem">
       <div class="step-label"><span class="step-num">3</span> <span id="picksStepLabel">Set Pick &amp; Odds for Each Game</span></div>
       <div id="csNote" class="cs-note" style="display:none">
@@ -439,7 +450,6 @@
       </div>
     </div>
 
-    <!-- STEP 4: Options -->
     <div id="optionsSection" style="display:none;margin-top:.75rem">
       <div class="step-label"><span class="step-num">4</span> Options</div>
       <div class="form-group">
@@ -514,20 +524,21 @@
 /* ═══════════════════════════════════════════════
    CONFIG & ENDPOINTS
 ═══════════════════════════════════════════════ */
-const BASE        = 'https://kikiwebbackend.onrender.com';
-const STD_API     = BASE + '/api/v1/booking-codes/standard';
-const CS_API      = BASE + '/api/v1/booking-codes/correct-score';
-const GAME_API    = BASE + '/api/v1/admin/games';
-const CS_MKT_API  = BASE + '/api/admin/correct-score';   // /{gameId}/generate
-const SETTLE_API  = BASE + '/api/admin/settlement/booking-codes';
-const RESULT_API  = BASE + '/api/v1/admin/games';
+const BASE       = 'https://kikiwebbackend.onrender.com';
+const STD_API    = BASE + '/api/v1/booking-codes/standard';
+const CS_API     = BASE + '/api/v1/booking-codes/correct-score';
+const GAME_API   = BASE + '/api/v1/admin/games';
+// ── FIX: use GET /options (read-only) not POST /generate ──
+const CS_OPT_API = BASE + '/api/admin/correct-score';   // + /{gameId}/options  (GET)
+const SETTLE_API = BASE + '/api/admin/settlement/booking-codes';
+const RESULT_API = BASE + '/api/v1/admin/games';
 
 /* ── State ── */
 let ALL_CODES             = [];
 let ALL_GAMES             = [];
 let selectedGameIds       = new Set();
-let pickConfig            = {};       // { gameId: { pick, odds, correctScoreOptionId, scorePrediction } }
-let csOptionsCache        = {};       // { gameId: [ {id, scorePrediction, odds, ...} ] }
+let pickConfig            = {};   // { gameId: { pick, odds, correctScoreOptionId, scorePrediction } }
+let csOptionsCache        = {};   // { gameId: CorrectScoreOptionResponse[] }
 let codeFilter            = 'ALL';
 let PAGE                  = 1;
 const PER_PAGE            = 9;
@@ -539,9 +550,9 @@ let selectedCodeType      = 'standard';
 /* ═══════════════════════════════════════════════
    AUTH HELPERS
 ═══════════════════════════════════════════════ */
-function bcGetToken()   { return localStorage.getItem('gstake_admin_token') || localStorage.getItem('gstake_token') || null; }
-function bcGetAdminId() { const a = JSON.parse(localStorage.getItem('gstake_admin') || '{}'); return a.id || a.adminId || null; }
-function bcRequireAuth(){ if (!bcGetToken()) { window.location.href = 'admin-login.html'; return false; } return true; }
+function bcGetToken()    { return localStorage.getItem('gstake_admin_token') || localStorage.getItem('gstake_token') || null; }
+function bcGetAdminId()  { const a = JSON.parse(localStorage.getItem('gstake_admin') || '{}'); return a.id || a.adminId || null; }
+function bcRequireAuth() { if (!bcGetToken()) { window.location.href = 'admin-login.html'; return false; } return true; }
 
 /* ═══════════════════════════════════════════════
    FETCH WRAPPER
@@ -666,12 +677,20 @@ async function loadGames() {
 }
 
 /* ═══════════════════════════════════════════════
-   CORRECT SCORE OPTIONS — fetch/generate per game
+   CORRECT SCORE OPTIONS
+   ── FIX: GET /options (read-only) instead of POST /generate ──
+   The generate endpoint throws 400 if market is not OPEN.
+   The options endpoint just reads whatever exists — safe always.
 ═══════════════════════════════════════════════ */
 async function fetchCSOptions(gameId) {
+  // Return from cache if already fetched this session
   if (csOptionsCache[gameId]) return csOptionsCache[gameId];
-  const result = await bcFetch(`${CS_MKT_API}/${gameId}/generate`, { method: 'POST' });
-  const options = Array.isArray(result) ? result : (result.options || result.content || []);
+
+  // ── KEY FIX: GET /api/admin/correct-score/{gameId}/options ──
+  // This is read-only and works regardless of market status.
+  // If the admin hasn't generated options yet, it returns [].
+  const result  = await bcFetch(`${CS_OPT_API}/${gameId}/options`);
+  const options = Array.isArray(result) ? result : [];
   csOptionsCache[gameId] = options;
   return options;
 }
@@ -736,7 +755,9 @@ function renderCodes() {
       <div class="code-card-games">
         ${(c.games || []).slice(0, 3).map(g => `
           <div class="code-mini-game">
-            ${isCS ? `<span class="pick pcs">${g.scorePrediction || 'CS'}</span>` : `<span class="pick ${pickClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
+            ${isCS
+              ? `<span class="pick pcs">${g.scorePrediction || 'CS'}</span>`
+              : `<span class="pick ${pickClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
             <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.homeTeam} vs ${g.awayTeam}</span>
             <span style="font-family:var(--ffC);font-weight:700;color:var(--accent)">${Number(g.odds).toFixed(2)}x</span>
           </div>`).join('')}
@@ -795,6 +816,7 @@ function selectCodeType(type) {
   selectedCodeType = type;
   document.getElementById('typeStandard').classList.toggle('selected',     type === 'standard');
   document.getElementById('typeCorrectScore').classList.toggle('selected', type === 'correctscore');
+  // Re-render picks if games already selected — switches between standard and CS UI
   if (selectedGameIds.size > 0) renderPicksList();
   document.getElementById('csNote').style.display = type === 'correctscore' ? 'flex' : 'none';
   document.getElementById('picksStepLabel').textContent =
@@ -832,8 +854,14 @@ function renderGameSelector() {
     g.homeTeam.toLowerCase().includes(q) || g.awayTeam.toLowerCase().includes(q)
   );
   const container = document.getElementById('gamesList');
-  if (!ALL_GAMES.length) { container.innerHTML = `<div style="font-size:.82rem;color:var(--t2);padding:.5rem">No upcoming games available.</div>`; return; }
-  if (!filtered.length)  { container.innerHTML = `<div style="font-size:.82rem;color:var(--t2);padding:.5rem">No games match your search.</div>`; return; }
+  if (!ALL_GAMES.length) {
+    container.innerHTML = `<div style="font-size:.82rem;color:var(--t2);padding:.5rem">No upcoming games available.</div>`;
+    return;
+  }
+  if (!filtered.length) {
+    container.innerHTML = `<div style="font-size:.82rem;color:var(--t2);padding:.5rem">No games match your search.</div>`;
+    return;
+  }
   container.innerHTML = filtered.map(g => {
     const sel = selectedGameIds.has(String(g.id));
     return `<div class="game-selector-item ${sel ? 'selected' : ''}" onclick="toggleGame('${g.id}')">
@@ -876,7 +904,7 @@ function updatePicksVisibility() {
   updateCombinedOdds();
 }
 
-/* ── Render picks list — handles both standard and CS ── */
+/* ── Render picks list — standard and CS modes ── */
 function renderPicksList() {
   const container = document.getElementById('picksList');
   const isCS      = selectedCodeType === 'correctscore';
@@ -896,8 +924,7 @@ function renderPicksList() {
     const csFields = `
       <div class="cs-score-section">
         <div class="cs-score-label">
-          Score option
-          <span class="cs-auto-badge">auto-fetched</span>
+          Score option <span class="cs-auto-badge">auto-fetched</span>
         </div>
         <div id="csField_${id}">
           <div class="cs-loading-row">
@@ -923,63 +950,70 @@ function renderPicksList() {
     </div>`;
   }).join('');
 
-  // For CS mode: fetch options for each game and populate dropdowns
+  // After rendering, kick off the async option fetches for CS mode
   if (isCS) {
     games.forEach(g => loadCSOptionsForGame(String(g.id)));
   }
 }
 
-/* ── Load CS options for a single game, update its dropdown ── */
+/* ── Load CS options via GET /options (not POST /generate) ── */
 async function loadCSOptionsForGame(gameId) {
   const fieldEl = document.getElementById(`csField_${gameId}`);
   if (!fieldEl) return;
 
   try {
     const options = await fetchCSOptions(gameId);
-    if (!fieldEl) return;
+    // Re-query after async — DOM may have changed
+    const el = document.getElementById(`csField_${gameId}`);
+    if (!el) return;
 
     if (!options || options.length === 0) {
-      fieldEl.innerHTML = `<div class="cs-error-row">
-        <svg data-lucide="alert-circle" style="width:13px;height:13px;flex-shrink:0"></svg>
-        No score options available.
-        <button class="cs-retry-btn" onclick="retryCSOptions('${gameId}')">Retry</button>
-      </div>`;
-      lucide.createIcons(); return;
+      // ── No options: tell admin to generate them first in Games & Odds ──
+      el.innerHTML = `
+        <div class="cs-error-row">
+          <svg data-lucide="alert-circle" style="width:13px;height:13px;flex-shrink:0"></svg>
+          No options yet — go to <strong>Games &amp; Odds → CS Market → Generate Score Options</strong> first.
+          <button class="cs-retry-btn" onclick="retryCSOptions('${gameId}')">Retry</button>
+        </div>`;
+      lucide.createIcons();
+      return;
     }
 
-    const currentCfg = pickConfig[gameId] || {};
-    const firstOpt   = options[0];
+    // ── FIX: extract score from scorePrediction field (not a missing 'score' field) ──
+    const firstOpt = options[0];
+    const firstScore = firstOpt.scorePrediction || '';
+    const firstOdds  = parseFloat(firstOpt.odds) || 1;
+    const firstId    = firstOpt.id || '';
 
-    // Auto-set first option if nothing selected yet
-    if (!currentCfg.correctScoreOptionId) {
-      const firstScore = firstOpt.scorePrediction || firstOpt.score || firstOpt.prediction || '';
+    // Auto-set first option if nothing chosen yet
+    if (!pickConfig[gameId]?.correctScoreOptionId) {
       pickConfig[gameId] = {
-        ...currentCfg,
-        correctScoreOptionId: firstOpt.id || firstOpt.optionId || firstOpt.correctScoreOptionId,
+        ...(pickConfig[gameId] || {}),
+        correctScoreOptionId: firstId,
         scorePrediction:      firstScore,
-        odds:                 firstOpt.odds || firstOpt.oddsValue || 1,
+        odds:                 firstOdds,
       };
       const oddsEl = document.getElementById(`odds_${gameId}`);
-      if (oddsEl) oddsEl.value = Number(pickConfig[gameId].odds).toFixed(2);
+      if (oddsEl) oddsEl.value = firstOdds.toFixed(2);
       updateCombinedOdds();
     }
 
-    // ── FIX: dropdown shows "2-1  (4.40x)" — UUID is the value but never displayed ──
-    const optionsHtml = options.map(opt => {
-      const optId   = opt.id || opt.optionId || opt.correctScoreOptionId || '';
-      const score   = opt.scorePrediction || opt.score || opt.prediction || '';
-      const optOdds = Number(opt.odds || opt.oddsValue || 1).toFixed(2);
-      const selected = (pickConfig[gameId]?.correctScoreOptionId === optId) ? 'selected' : '';
-      const label   = score ? `${score}  (${optOdds}x)` : `(${optOdds}x)`;
-      return `<option value="${optId}" data-odds="${opt.odds || opt.oddsValue || 1}" data-score="${score}" ${selected}>${label}</option>`;
+    // Build <select> — value = UUID, display = "2-1 (4.40x)"
+    const currentSelId = pickConfig[gameId]?.correctScoreOptionId || firstId;
+    const optionsHtml  = options.map(opt => {
+      const optId    = opt.id || '';
+      const optScore = opt.scorePrediction || '';
+      const optOdds  = parseFloat(opt.odds || 1).toFixed(2);
+      const sel      = optId === currentSelId ? 'selected' : '';
+      return `<option value="${optId}" data-odds="${opt.odds || 1}" data-score="${optScore}" ${sel}>${optScore}  (${optOdds}x)</option>`;
     }).join('');
 
-    const currentSel   = pickConfig[gameId]?.correctScoreOptionId || '';
-    const currentOpt   = options.find(o => (o.id || o.optionId || o.correctScoreOptionId) === currentSel) || firstOpt;
-    const previewScore = currentOpt?.scorePrediction || currentOpt?.score || currentOpt?.prediction || '—';
-    const previewOdds  = Number(currentOpt?.odds || currentOpt?.oddsValue || 1).toFixed(2);
+    // Preview for currently selected option
+    const currentOpt   = options.find(o => o.id === currentSelId) || firstOpt;
+    const previewScore = currentOpt.scorePrediction || '—';
+    const previewOdds  = parseFloat(currentOpt.odds || 1).toFixed(2);
 
-    fieldEl.innerHTML = `
+    el.innerHTML = `
       <div class="cs-select-wrap">
         <select class="cs-score-select" id="csSel_${gameId}" onchange="onCSOptionChange('${gameId}', this)">
           ${optionsHtml}
@@ -992,17 +1026,19 @@ async function loadCSOptionsForGame(gameId) {
     lucide.createIcons();
 
   } catch (err) {
-    if (!fieldEl) return;
-    fieldEl.innerHTML = `<div class="cs-error-row">
-      <svg data-lucide="alert-circle" style="width:13px;height:13px;flex-shrink:0"></svg>
-      Failed to load options.
-      <button class="cs-retry-btn" onclick="retryCSOptions('${gameId}')">Retry</button>
-    </div>`;
+    const el = document.getElementById(`csField_${gameId}`);
+    if (!el) return;
+    el.innerHTML = `
+      <div class="cs-error-row">
+        <svg data-lucide="alert-circle" style="width:13px;height:13px;flex-shrink:0"></svg>
+        Failed to load options.
+        <button class="cs-retry-btn" onclick="retryCSOptions('${gameId}')">Retry</button>
+      </div>`;
     lucide.createIcons();
   }
 }
 
-/* ── Retry fetching CS options (clears cache for that game) ── */
+/* ── Retry: clear cache and reload for that game ── */
 function retryCSOptions(gameId) {
   delete csOptionsCache[gameId];
   const fieldEl = document.getElementById(`csField_${gameId}`);
@@ -1012,12 +1048,13 @@ function retryCSOptions(gameId) {
   loadCSOptionsForGame(gameId);
 }
 
-/* ── Handle user selecting a score option from dropdown ── */
+/* ── Handle dropdown change ── */
 function onCSOptionChange(gameId, selectEl) {
   const opt      = selectEl.options[selectEl.selectedIndex];
   const optId    = selectEl.value;
-  const optOdds  = parseFloat(opt.getAttribute('data-odds')) || 1;
+  // ── FIX: read data-score attribute which maps to scorePrediction ──
   const optScore = opt.getAttribute('data-score') || '';
+  const optOdds  = parseFloat(opt.getAttribute('data-odds')) || 1;
 
   pickConfig[gameId] = {
     ...pickConfig[gameId],
@@ -1073,29 +1110,50 @@ async function submitCreate() {
 
   if (selectedGameIds.size < 1) { showCreateError('Select at least 1 game.'); return; }
 
+  // ── Validate each game has a complete config ──
   for (const id of selectedGameIds) {
     const cfg = pickConfig[id];
-    if (!cfg || !cfg.odds || cfg.odds < 1) { showCreateError('All odds must be at least 1.00.'); return; }
-    if (!isCS && !cfg.pick)                { showCreateError('Please set a pick for all games.'); return; }
-    if (isCS && (!cfg.correctScoreOptionId || cfg.correctScoreOptionId.trim() === '')) {
-      const g = ALL_GAMES.find(x => String(x.id) === id);
-      showCreateError(`Please select a score option for ${g ? g.homeTeam + ' vs ' + g.awayTeam : 'all games'}.`);
-      return;
+    const g   = ALL_GAMES.find(x => String(x.id) === id);
+    const name = g ? `${g.homeTeam} vs ${g.awayTeam}` : id;
+
+    if (!cfg || !cfg.odds || cfg.odds < 1) {
+      showCreateError(`Odds must be at least 1.00 for ${name}.`); return;
+    }
+    if (!isCS && !cfg.pick) {
+      showCreateError(`Please set a pick for ${name}.`); return;
+    }
+    if (isCS) {
+      if (!cfg.correctScoreOptionId || cfg.correctScoreOptionId.trim() === '') {
+        showCreateError(`No score option selected for ${name}. If options failed to load, go to Games & Odds → CS Market and generate them first.`);
+        return;
+      }
+      // ── FIX: scorePrediction must match format "2-1" — validate before sending ──
+      const pred = (cfg.scorePrediction || '').trim();
+      if (!pred || !/^\d{1,2}-\d{1,2}$/.test(pred)) {
+        showCreateError(`Invalid score prediction "${pred}" for ${name}. Expected format: "2-1".`);
+        return;
+      }
     }
   }
 
+  // ── Build payload ──
   const games = Array.from(selectedGameIds).map((id, idx) => {
-    const cfg  = pickConfig[id];
-    const base = { gameId: id, odds: parseFloat(cfg.odds), position: idx + 1 };
+    const cfg = pickConfig[id];
     if (isCS) {
-      // ── FIX: always send scorePrediction — never blank ──
       return {
-        ...base,
+        gameId:               id,
+        odds:                 parseFloat(cfg.odds),
+        position:             idx + 1,
         correctScoreOptionId: cfg.correctScoreOptionId.trim(),
-        scorePrediction: (cfg.scorePrediction || '').trim(),
+        scorePrediction:      cfg.scorePrediction.trim(),   // always "N-N" format
       };
     } else {
-      return { ...base, pick: cfg.pick };
+      return {
+        gameId:   id,
+        odds:     parseFloat(cfg.odds),
+        position: idx + 1,
+        pick:     cfg.pick,
+      };
     }
   });
 
@@ -1147,7 +1205,9 @@ function openDetailModal(code) {
         <div class="game-match">${g.homeTeam} vs ${g.awayTeam}</div>
         <div class="game-date">${fmtDate(g.matchDate)}</div>
       </div>
-      ${isCS ? `<span class="pick-badge pick-cs">${g.scorePrediction || 'CS'}</span>` : `<span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
+      ${isCS
+        ? `<span class="pick-badge pick-cs">${g.scorePrediction || 'CS'}</span>`
+        : `<span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
       <div class="game-odds">${Number(g.odds).toFixed(2)}x</div>
     </div>`).join('');
 
@@ -1168,7 +1228,10 @@ function openDetailModal(code) {
   lucide.createIcons();
 }
 
-function closeDetailModal() { document.getElementById('detailModal').classList.remove('show'); currentDetailCode = null; }
+function closeDetailModal() {
+  document.getElementById('detailModal').classList.remove('show');
+  currentDetailCode = null;
+}
 
 /* ═══════════════════════════════════════════════
    SETTLE MODAL
@@ -1189,7 +1252,9 @@ function openSettleModal(code) {
         <div class="game-match">${g.homeTeam} vs ${g.awayTeam}</div>
         <div class="game-date">${fmtDate(g.matchDate)}</div>
       </div>
-      ${code._type === 'CORRECT_SCORE' ? `<span class="pick-badge pick-cs">${g.scorePrediction || 'CS'}</span>` : `<span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
+      ${code._type === 'CORRECT_SCORE'
+        ? `<span class="pick-badge pick-cs">${g.scorePrediction || 'CS'}</span>`
+        : `<span class="pick-badge ${pickBadgeClass(g.pick)}">${g.pickLabel || pickLabel(g.pick)}</span>`}
       <button class="btn btn-secondary btn-sm" onclick="openScoreModal('${g.gameId}','${g.homeTeam}','${g.awayTeam}','${code.id}')">
         <svg data-lucide="edit-2"></svg> Score
       </button>
@@ -1221,7 +1286,10 @@ function openScoreModal(gameId, homeTeam, awayTeam, bookingCodeId) {
   lucide.createIcons();
 }
 
-function closeScoreModal() { document.getElementById('scoreModal').classList.remove('show'); currentScoreGameId = null; currentScoreBookingId = null; }
+function closeScoreModal() {
+  document.getElementById('scoreModal').classList.remove('show');
+  currentScoreGameId = null; currentScoreBookingId = null;
+}
 
 async function submitScore() {
   const home = parseInt(document.getElementById('homeScoreInput').value);
