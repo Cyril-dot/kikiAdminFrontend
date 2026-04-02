@@ -147,7 +147,6 @@ async function apiAddGame(payload) {
 
 /** PATCH /api/v1/admin/games/{gameId} */
 async function apiUpdateGame(gameId, payload) {
-  // Only send fields the backend UpdateGameRequest DTO accepts
   const { homeTeam, awayTeam, matchDate, bookingCode,
           oddsHomeWin, oddsDraw, oddsAwayWin } = payload;
 
@@ -241,7 +240,24 @@ function normaliseGamePayload(payload) {
    CORRECT SCORE MARKET
 ══════════════════════════════════════════════════════ */
 
-/** POST /api/admin/correct-score/{gameId}/generate */
+/**
+ * GET /api/admin/correct-score/{gameId}/options
+ * Read existing score options — no side effects, safe to call repeatedly.
+ * Returns [] if no options have been generated yet for this game.
+ * Used by the booking-code form to populate score dropdowns.
+ */
+async function apiGetCSOptions(gameId) {
+  const result = await apiFetch(`${CORRECT_SCORE_API}/${gameId}/options`);
+  // Guard: always return an array even if the backend wraps or returns null
+  return Array.isArray(result) ? result : [];
+}
+
+/**
+ * POST /api/admin/correct-score/{gameId}/generate
+ * Generates (or regenerates) random score options for a game.
+ * Only works while the market status is OPEN — throws 400 otherwise.
+ * Use apiGetCSOptions() to READ options; only call this to create them.
+ */
 async function apiGenerateCSOptions(gameId) {
   return apiFetch(`${CORRECT_SCORE_API}/${gameId}/generate`, { method: 'POST' });
 }
@@ -256,6 +272,74 @@ async function apiRevealCSMarket(gameId, homeScore, awayScore) {
   return apiFetch(`${CORRECT_SCORE_API}/${gameId}/reveal`, {
     method: 'POST',
     body: JSON.stringify({ homeScore, awayScore }),
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   BOOKING CODES — STANDARD
+══════════════════════════════════════════════════════ */
+
+/**
+ * POST /api/v1/booking-codes
+ * Create a standard (1X2) booking code slip.
+ */
+async function apiCreateBookingCode(payload) {
+  return apiFetch(`${API_BASE}/booking-codes`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * GET /api/v1/booking-codes/{code}
+ * Load a standard booking code by its code string.
+ */
+async function apiGetBookingCode(code) {
+  return apiFetch(`${API_BASE}/booking-codes/${code}`);
+}
+
+/* ══════════════════════════════════════════════════════
+   BOOKING CODES — CORRECT SCORE
+══════════════════════════════════════════════════════ */
+
+/**
+ * POST /api/v1/booking-codes/correct-score
+ * Create a correct-score booking code slip.
+ * payload must match CreateCorrectScoreBookingCodeRequest:
+ *   { expiresAt?, games: [{ gameId, scorePrediction, correctScoreOptionId, odds }] }
+ */
+async function apiCreateCSBookingCode(payload) {
+  return apiFetch(`${API_BASE}/booking-codes/correct-score`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * GET /api/v1/booking-codes/correct-score/{code}
+ * Load a correct-score booking code by its code string (user-facing).
+ */
+async function apiGetCSBookingCode(code) {
+  return apiFetch(`${API_BASE}/booking-codes/correct-score/${code}`);
+}
+
+/**
+ * GET /api/v1/booking-codes/correct-score/admin/mine
+ * List all correct-score booking codes created by the current admin.
+ */
+async function apiGetMyCSBookingCodes(page = 0, size = 20) {
+  return apiFetch(
+    `${API_BASE}/booking-codes/correct-score/admin/mine?page=${page}&size=${size}&sort=createdAt,desc`
+  );
+}
+
+/**
+ * PUT /api/v1/booking-codes/correct-score/{id}/disable
+ * Disable a correct-score booking code by its UUID.
+ */
+async function apiDisableCSBookingCode(id) {
+  return apiFetch(`${API_BASE}/booking-codes/correct-score/${id}/disable`, {
+    method: 'PUT',
   });
 }
 
