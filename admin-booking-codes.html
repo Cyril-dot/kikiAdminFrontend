@@ -242,7 +242,7 @@
 .code-mini-game .pick.p2       { color: var(--blue); }
 .code-mini-game .pick.pcs      { color: #f59e0b; }
 .code-actions {
-  display: flex; gap: .4rem; flex-wrap: wrap;
+  display: flex; gap: .4rem; flex-wrap: wrap; align-items: center;
   margin-top: 1rem; padding-top: .75rem; border-top: 1px solid var(--border);
 }
 
@@ -320,6 +320,14 @@
 }
 .cs-note svg { width: 14px; height: 14px; flex-shrink: 0; }
 
+/* Hide button style */
+.btn-hide {
+  margin-left: auto;
+  opacity: .55;
+  transition: opacity .15s;
+}
+.btn-hide:hover { opacity: 1; }
+
 .modal { max-width: 620px; }
 </style>
 </head>
@@ -379,9 +387,14 @@
         <button class="tab-btn" onclick="setFilter('CORRECT_SCORE',this)">Correct Score</button>
         <button class="tab-btn" onclick="setFilter('DISABLED',this)">Disabled</button>
       </div>
-      <div class="search-wrap" style="max-width:260px;min-width:180px">
-        <svg data-lucide="search"></svg>
-        <input type="text" class="search-input" id="codeSearch" placeholder="Search code…" oninput="renderCodes()">
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+        <div class="search-wrap" style="max-width:260px;min-width:180px">
+          <svg data-lucide="search"></svg>
+          <input type="text" class="search-input" id="codeSearch" placeholder="Search code…" oninput="renderCodes()">
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="clearHidden()" title="Show all hidden codes" style="white-space:nowrap;opacity:.7">
+          <svg data-lucide="eye"></svg> Unhide All
+        </button>
       </div>
     </div>
 
@@ -528,8 +541,7 @@ const BASE       = 'https://kikiwebbackend.onrender.com';
 const STD_API    = BASE + '/api/v1/booking-codes/standard';
 const CS_API     = BASE + '/api/v1/booking-codes/correct-score';
 const GAME_API   = BASE + '/api/v1/admin/games';
-// ── FIX: use GET /options (read-only) not POST /generate ──
-const CS_OPT_API = BASE + '/api/admin/correct-score';   // + /{gameId}/options  (GET)
+const CS_OPT_API = BASE + '/api/admin/correct-score';
 const SETTLE_API = BASE + '/api/admin/settlement/booking-codes';
 const RESULT_API = BASE + '/api/v1/admin/games';
 
@@ -537,8 +549,8 @@ const RESULT_API = BASE + '/api/v1/admin/games';
 let ALL_CODES             = [];
 let ALL_GAMES             = [];
 let selectedGameIds       = new Set();
-let pickConfig            = {};   // { gameId: { pick, odds, correctScoreOptionId, scorePrediction } }
-let csOptionsCache        = {};   // { gameId: CorrectScoreOptionResponse[] }
+let pickConfig            = {};
+let csOptionsCache        = {};
 let codeFilter            = 'ALL';
 let PAGE                  = 1;
 const PER_PAGE            = 9;
@@ -546,6 +558,22 @@ let currentDetailCode     = null;
 let currentScoreGameId    = null;
 let currentScoreBookingId = null;
 let selectedCodeType      = 'standard';
+
+/* ── Hidden codes — persisted in localStorage, no API call needed ── */
+let hiddenCodes = new Set(JSON.parse(localStorage.getItem('gstake_hidden_codes') || '[]'));
+
+function hideCode(codeId) {
+  hiddenCodes.add(String(codeId));
+  localStorage.setItem('gstake_hidden_codes', JSON.stringify([...hiddenCodes]));
+  renderCodes();
+}
+
+function clearHidden() {
+  hiddenCodes.clear();
+  localStorage.removeItem('gstake_hidden_codes');
+  renderCodes();
+  showPageSuccess('All hidden codes are visible again.');
+}
 
 /* ═══════════════════════════════════════════════
    AUTH HELPERS
@@ -659,7 +687,11 @@ async function loadCodes() {
     ]);
     const stdCodes = (Array.isArray(stdData) ? stdData : (stdData.content || [])).map(c => ({ ...c, _type: 'STANDARD' }));
     const csCodes  = (Array.isArray(csData)  ? csData  : (csData.content  || [])).map(c => ({ ...c, _type: 'CORRECT_SCORE' }));
-    ALL_CODES = [...stdCodes, ...csCodes].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    ALL_CODES = [...stdCodes, ...csCodes]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .filter(c => !hiddenCodes.has(String(c.id)));  // ← filter hidden codes out
+
     updateStats();
     renderCodes();
   } catch (err) {
@@ -678,17 +710,9 @@ async function loadGames() {
 
 /* ═══════════════════════════════════════════════
    CORRECT SCORE OPTIONS
-   ── FIX: GET /options (read-only) instead of POST /generate ──
-   The generate endpoint throws 400 if market is not OPEN.
-   The options endpoint just reads whatever exists — safe always.
 ═══════════════════════════════════════════════ */
 async function fetchCSOptions(gameId) {
-  // Return from cache if already fetched this session
   if (csOptionsCache[gameId]) return csOptionsCache[gameId];
-
-  // ── KEY FIX: GET /api/admin/correct-score/{gameId}/options ──
-  // This is read-only and works regardless of market status.
-  // If the admin hasn't generated options yet, it returns [].
   const result  = await bcFetch(`${CS_OPT_API}/${gameId}/options`);
   const options = Array.isArray(result) ? result : [];
   csOptionsCache[gameId] = options;
@@ -699,6 +723,9 @@ async function fetchCSOptions(gameId) {
    STATS
 ═══════════════════════════════════════════════ */
 function updateStats() {
+  // Stats are based on ALL codes (including hidden) so counts stay accurate
+  // We'll recompute from raw before filter was applied — but since we filter
+  // at load time, we just use ALL_CODES here. The counts may exclude hidden.
   document.getElementById('statTotal').textContent   = ALL_CODES.length;
   document.getElementById('statActive').textContent  = ALL_CODES.filter(c => c.status === 'ACTIVE').length;
   document.getElementById('statExpired').textContent = ALL_CODES.filter(c => c.status !== 'ACTIVE').length;
@@ -774,6 +801,9 @@ function renderCodes() {
           <button class="btn btn-danger btn-sm" onclick="disableCode('${c.id}','${c._type}')">
             <svg data-lucide="ban"></svg> Disable
           </button>` : ''}
+        <button class="btn btn-secondary btn-sm btn-hide" onclick="hideCode('${c.id}')" title="Hide from your view">
+          <svg data-lucide="eye-off"></svg> Hide
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -816,7 +846,6 @@ function selectCodeType(type) {
   selectedCodeType = type;
   document.getElementById('typeStandard').classList.toggle('selected',     type === 'standard');
   document.getElementById('typeCorrectScore').classList.toggle('selected', type === 'correctscore');
-  // Re-render picks if games already selected — switches between standard and CS UI
   if (selectedGameIds.size > 0) renderPicksList();
   document.getElementById('csNote').style.display = type === 'correctscore' ? 'flex' : 'none';
   document.getElementById('picksStepLabel').textContent =
@@ -904,7 +933,6 @@ function updatePicksVisibility() {
   updateCombinedOdds();
 }
 
-/* ── Render picks list — standard and CS modes ── */
 function renderPicksList() {
   const container = document.getElementById('picksList');
   const isCS      = selectedCodeType === 'correctscore';
@@ -950,25 +978,21 @@ function renderPicksList() {
     </div>`;
   }).join('');
 
-  // After rendering, kick off the async option fetches for CS mode
   if (isCS) {
     games.forEach(g => loadCSOptionsForGame(String(g.id)));
   }
 }
 
-/* ── Load CS options via GET /options (not POST /generate) ── */
 async function loadCSOptionsForGame(gameId) {
   const fieldEl = document.getElementById(`csField_${gameId}`);
   if (!fieldEl) return;
 
   try {
     const options = await fetchCSOptions(gameId);
-    // Re-query after async — DOM may have changed
     const el = document.getElementById(`csField_${gameId}`);
     if (!el) return;
 
     if (!options || options.length === 0) {
-      // ── No options: tell admin to generate them first in Games & Odds ──
       el.innerHTML = `
         <div class="cs-error-row">
           <svg data-lucide="alert-circle" style="width:13px;height:13px;flex-shrink:0"></svg>
@@ -979,13 +1003,11 @@ async function loadCSOptionsForGame(gameId) {
       return;
     }
 
-    // ── FIX: extract score from scorePrediction field (not a missing 'score' field) ──
-    const firstOpt = options[0];
+    const firstOpt   = options[0];
     const firstScore = firstOpt.scorePrediction || '';
     const firstOdds  = parseFloat(firstOpt.odds) || 1;
     const firstId    = firstOpt.id || '';
 
-    // Auto-set first option if nothing chosen yet
     if (!pickConfig[gameId]?.correctScoreOptionId) {
       pickConfig[gameId] = {
         ...(pickConfig[gameId] || {}),
@@ -998,7 +1020,6 @@ async function loadCSOptionsForGame(gameId) {
       updateCombinedOdds();
     }
 
-    // Build <select> — value = UUID, display = "2-1 (4.40x)"
     const currentSelId = pickConfig[gameId]?.correctScoreOptionId || firstId;
     const optionsHtml  = options.map(opt => {
       const optId    = opt.id || '';
@@ -1008,7 +1029,6 @@ async function loadCSOptionsForGame(gameId) {
       return `<option value="${optId}" data-odds="${opt.odds || 1}" data-score="${optScore}" ${sel}>${optScore}  (${optOdds}x)</option>`;
     }).join('');
 
-    // Preview for currently selected option
     const currentOpt   = options.find(o => o.id === currentSelId) || firstOpt;
     const previewScore = currentOpt.scorePrediction || '—';
     const previewOdds  = parseFloat(currentOpt.odds || 1).toFixed(2);
@@ -1038,7 +1058,6 @@ async function loadCSOptionsForGame(gameId) {
   }
 }
 
-/* ── Retry: clear cache and reload for that game ── */
 function retryCSOptions(gameId) {
   delete csOptionsCache[gameId];
   const fieldEl = document.getElementById(`csField_${gameId}`);
@@ -1048,11 +1067,9 @@ function retryCSOptions(gameId) {
   loadCSOptionsForGame(gameId);
 }
 
-/* ── Handle dropdown change ── */
 function onCSOptionChange(gameId, selectEl) {
   const opt      = selectEl.options[selectEl.selectedIndex];
   const optId    = selectEl.value;
-  // ── FIX: read data-score attribute which maps to scorePrediction ──
   const optScore = opt.getAttribute('data-score') || '';
   const optOdds  = parseFloat(opt.getAttribute('data-odds')) || 1;
 
@@ -1110,7 +1127,6 @@ async function submitCreate() {
 
   if (selectedGameIds.size < 1) { showCreateError('Select at least 1 game.'); return; }
 
-  // ── Validate each game has a complete config ──
   for (const id of selectedGameIds) {
     const cfg = pickConfig[id];
     const g   = ALL_GAMES.find(x => String(x.id) === id);
@@ -1127,7 +1143,6 @@ async function submitCreate() {
         showCreateError(`No score option selected for ${name}. If options failed to load, go to Games & Odds → CS Market and generate them first.`);
         return;
       }
-      // ── FIX: scorePrediction must match format "2-1" — validate before sending ──
       const pred = (cfg.scorePrediction || '').trim();
       if (!pred || !/^\d{1,2}-\d{1,2}$/.test(pred)) {
         showCreateError(`Invalid score prediction "${pred}" for ${name}. Expected format: "2-1".`);
@@ -1136,7 +1151,6 @@ async function submitCreate() {
     }
   }
 
-  // ── Build payload ──
   const games = Array.from(selectedGameIds).map((id, idx) => {
     const cfg = pickConfig[id];
     if (isCS) {
@@ -1145,7 +1159,7 @@ async function submitCreate() {
         odds:                 parseFloat(cfg.odds),
         position:             idx + 1,
         correctScoreOptionId: cfg.correctScoreOptionId.trim(),
-        scorePrediction:      cfg.scorePrediction.trim(),   // always "N-N" format
+        scorePrediction:      cfg.scorePrediction.trim(),
       };
     } else {
       return {
