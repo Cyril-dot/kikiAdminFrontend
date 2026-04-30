@@ -2,9 +2,9 @@
    GStake Admin — API Integration Layer
    ═══════════════════════════════════════════════════════ */
 
-const API_BASE          = 'https://kikiwebbackend.onrender.com/api/v1';
-const ADMIN_API         = 'https://kikiwebbackend.onrender.com/api/v1/admin';
-const CORRECT_SCORE_API = 'https://kikiwebbackend.onrender.com/api/admin/correct-score';
+const API_BASE          = 'https://kikiwebbackend-4834.onrender.com/api/v1';
+const ADMIN_API         = 'https://kikiwebbackend-4834.onrender.com/api/v1/admin';
+const CORRECT_SCORE_API = 'https://kikiwebbackend-4834.onrender.com/api/admin/correct-score';
 
 /* ── Auth helpers ── */
 
